@@ -9,18 +9,23 @@
   weight = -109
 
 # Submenus are done this way: parent -> identifier
+# [[main]]
+#   name = "Links"
+#   identifier = "Links"
+#   weight = -108
+# [[main]]
+#   parent = "Links"
+#   name = "LinkedIn"
+#   url = "https://www.linkedin.com/ankitpaudel20"
+# [[main]]
+#   parent = "Links"
+#   name = "Twitter"
+#   url = "https://x.com/ankitpaudel2000"
+
 [[main]]
-  name = "Links"
-  identifier = "Links"
+  name = "CV"
+  url = "../../docs/Ankit_Paudel_Resume.pdf"
   weight = -108
-[[main]]
-  parent = "Links"
-  name = "LinkedIn"
-  url = "https://www.linkedin.com/ankitpaudel20"
-[[main]]
-  parent = "Links"
-  name = "Twitter"
-  url = "https://x.com/ankitpaudel2000"
 
 [[main]]
   name = "About"
