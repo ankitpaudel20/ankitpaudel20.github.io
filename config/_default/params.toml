@@ -12,10 +12,10 @@ introDescription = "Technologist, perpetual student, continual incremental impro
 # showShare = false # Uncomment to not show share buttons on each post. Also available in each post's front matter.
 
 # Google analytics Id
-ga_analytics = ""
+ga_analytics = "G-ZD3MPNF2QY"
 
 # Google tag manager
-google_tag_manager_id = ""
+google_tag_manager_id = "GTM-PQNL6L22"
 
 # Baidu analytics Id
 # baidu_analytics = "XXXXXXXX"
