@@ -42,7 +42,7 @@ tags:
 	- Get the container that has been running this whole time in production. Either docker pull or form sysadmin.
 	- Here is one of the answer on how to load the image to your local docker instance if you don't have access to docker pull image:
 	- https://stackoverflow.com/questions/37905763/how-do-i-download-docker-images-without-using-the-pull-command
-	-
+
 - But if you had not done so before, you need answers to following things from your sysadmin or anyone who has access to the running system:
 	- What is the OS? if Its Windows, Goodluck on that. Go the usual pyenv/poetry route.
 	- The output of pip freeze and python version. Get hands on requirements.txt.
