@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Nginx on Ankit Paudel</title><link>https://ankitp.com.np/tags/nginx/</link><description>Recent content in Nginx on Ankit Paudel</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 10 Jul 2024 00:44:36 +0545</lastBuildDate><atom:link href="https://ankitp.com.np/tags/nginx/index.xml" rel="self" type="application/rss+xml"/><item><title>Request body aware dynamic routing in ingress nginx using custom plugins.</title><link>https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./</link><pubDate>Wed, 10 Jul 2024 00:44:36 +0545</pubDate><guid>https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./</guid><description>&lt;h1 id="problem">Problem
+&lt;/h1>&lt;ul>
+&lt;li>Consider your product is going through a big overhaul and re-architecturing where the existing microservices might be broken into multiple ones or merged to single ones, there will be a big jumble of mess of routes at the ingress level.&lt;/li>
+&lt;li>This will make transitioning a bit hard as using canary based routing will gradually become complicated. So to simplify this canary setup, we take the routing matter into our own hands.&lt;/li>
+&lt;li>If you can use Consul and it works right for you, that might be the better option as Consul is more mature and production ready. You will be less likely to break things.&lt;/li>
+&lt;/ul>
+&lt;h1 id="solution">Solution
+&lt;/h1>&lt;ul>
+&lt;li>Architecture proposed:
+&lt;img src="https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture.png"
+width="2670"
+height="1093"
+srcset="https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture_hu6595140419807737708.png 480w, https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture_hu2862933509379968795.png 1024w"
+loading="lazy"
+alt="High Level Architecture"
+class="gallery-image"
+data-flex-grow="244"
+data-flex-basis="586px"
+>&lt;/li>
+&lt;/ul>
+&lt;h1 id="implementation">Implementation
+&lt;/h1>&lt;ul>
+&lt;li>Its Almost same as auth implementation but will require a bit of scripting as we are not just checking status code to return 401 or to allow the traffic.&lt;/li>
+&lt;li>This can be easily achieved with &lt;a class="link" href="https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#configuration-snippet" target="_blank" rel="noopener"
+>configuration snippet&lt;/a> annotation in ingress-nginx.&lt;/li>
+&lt;li>We write a configuration snippet that sends request to the server that is responsible for getting the route information from the request body. Which more or less looks like one below:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl"> &lt;span class="n">apiVersion&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">networking&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">k8s&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">io&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">kind&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Ingress&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">metadata&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">docs&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">service&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">annotations&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">nginx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ingress&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">kubernetes&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">io&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">configuration&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">snippet&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">|&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">access_by_lua_block&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">cjson&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;cjson&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">http&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span> &lt;span class="s2">&amp;#34;resty.http&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">default_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;docs1&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">httpc&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">http&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">new&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">res&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">httpc&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="n">request_uri&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;http://authserver.ingress-nginx-helpers.svc.cluster.local:5000/find-backend&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">method&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;POST&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">body&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">encode&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="n">real_url&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">request_uri&lt;/span> &lt;span class="p">}),&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">headers&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Content-Type&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;application/json&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Token&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;token&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;cookie&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;cookie&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;x-api-key&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;x-api-key&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">decode_err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">decode&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">body&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">response&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">proxy_upstream_name&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">namespace&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">backend&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">service_port&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">balancer&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">nil&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">spec&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ingressClassName&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">rules&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="o">-&lt;/span> &lt;span class="n">host&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">hello&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">world&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">http&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">paths&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="o">-&lt;/span> &lt;span class="n">backend&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">service&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">docs1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">port&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">number&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">5000&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">path&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">/&lt;/span>&lt;span class="n">api&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">v1&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">docs1&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">docs&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">custom&lt;/span>&lt;span class="o">/&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">pathType&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Exact&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>This will match for path &lt;code>/api/v1/docs1/docs/custom/&lt;/code> and send request to the server to get backend information. Which in turn will be used to populate &lt;code>proxy_upstream_name&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Don&amp;rsquo;t forget to set &lt;code>ngx.ctx.balancer&lt;/code> to nil at last. &lt;a class="link" href="https://stackoverflow.com/questions/78717865/using-dynamic-backend-from-auth-like-server-in-nginx" target="_blank" rel="noopener"
+>Read here&lt;/a>&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;h1 id="enhancement">Enhancement
+&lt;/h1>&lt;ul>
+&lt;li>This for POC looks good but for real world application we try to make it as frictionless as possible.&lt;/li>
+&lt;/ul>
+&lt;h2 id="creating-a-ingress-nginx-plugin">Creating a ingress-nginx plugin
+&lt;/h2>&lt;ul>
+&lt;li>We create a plugin that does all of this and a flag that will determine weather to run this plugin or not for each ingress.&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl"> &lt;span class="n">apiVersion&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">kind&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ConfigMap&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">metadata&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">custom&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">script&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">namespace&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ingress&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">data&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">main&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">lua&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">|&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">ngx&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">_M&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">cjson&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;cjson&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">http&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span> &lt;span class="s2">&amp;#34;resty.http&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">function&lt;/span> &lt;span class="n">_M&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">rewrite&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="ow">not&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">dynamic_plugin&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;on&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">final_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;eevee&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">httpc&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">http&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">new&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">res&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">httpc&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="n">request_uri&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;http://authserver.ingress-nginx-helpers.svc.cluster.local:5000/find-backend&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">method&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;POST&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">body&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">encode&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="n">real_url&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">request_uri&lt;/span> &lt;span class="p">}),&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">headers&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Content-Type&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;application/json&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Token&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;token&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;cookie&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;cookie&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;x-api-key&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;x-api-key&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">decode_err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">decode&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">body&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">response&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">final_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">backend&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">proxy_upstream_name&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">namespace&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">final_backend&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">service_port&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">balancer&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">nil&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">_M&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>As we can see there is a flag up top &lt;code>dynamic_plugin&lt;/code> that will be set in each ingress as a configurations snippet to trigger the execution of this script in each request.&lt;/li>
+&lt;li>The plugin code will be written in config-map and will be mounted to ingress controller kubernetes pod as a lua file in the plugins directory.&lt;/li>
+&lt;/ul>
+&lt;h2 id="mounting-the-plugin">Mounting the plugin
+&lt;/h2>&lt;ul>
+&lt;li>We add the volume mount in out controller deployment by adding following lines in the right place:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl"> volumes:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - configMap:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> defaultMode: 420
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: ngx-custom-script
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: lua-scripts-volume
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> volumeMounts:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - mountPath: /etc/nginx/lua/plugins/modify_request/
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: lua-scripts-volume
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> readOnly: true
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>More about creating a nginx lua plugin &lt;a class="link" href="https://github.com/kubernetes/ingress-nginx/blob/main/rootfs/etc/nginx/lua/plugins/README.md" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;h2 id="running-the-plugin">Running the plugin
+&lt;/h2>&lt;ul>
+&lt;li>Create a new ingress, omitting the lua part and adding a configuration snippet annotation that sets the flag written in the plugin lua.&lt;/li>
+&lt;li>The annotations will be like:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl"> nginx.ingress.kubernetes.io/configuration-snippet: |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> set $dynamic_plugin &amp;#34;on&amp;#34;;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>Now each request sent to the ingress with this variable set will have its route dynamically created as per your requirement.&lt;/li>
+&lt;/ul>
+&lt;h1 id="the-be-finder-server">The BE-finder server
+&lt;/h1>&lt;ul>
+&lt;li>This is the backbone of your ingress, so should be as fast as possible. Thus it should be written in efficient languages like Rust, Golang or C/C++.&lt;/li>
+&lt;li>The architecture proposed will first check for the required information in the redis and does not bother to send next request to database as we won&amp;rsquo;t have enough time and are okay with a few &lt;strong>leakage&lt;/strong> traffic.&lt;/li>
+&lt;li>The cache miss will trigger a goroutine that fetches the information from database for the next request to pick up.&lt;/li>
+&lt;/ul>
+&lt;h1 id="conclusion">Conclusion
+&lt;/h1>&lt;ul>
+&lt;li>We do not need complicated setup with service meshes to get intelligent routing.&lt;/li>
+&lt;li>Performance will be better than service mesh based solution.&lt;/li>
+&lt;li>Easy to setup and use.&lt;/li>
+&lt;/ul></description></item></channel></rss>

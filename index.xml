@@ -1,0 +1,914 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ankit Paudel</title><link>https://ankitp.com.np/</link><description>Recent content on Ankit Paudel</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 10 Jul 2024 00:44:36 +0545</lastBuildDate><atom:link href="https://ankitp.com.np/index.xml" rel="self" type="application/rss+xml"/><item><title>Request body aware dynamic routing in ingress nginx using custom plugins.</title><link>https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./</link><pubDate>Wed, 10 Jul 2024 00:44:36 +0545</pubDate><guid>https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./</guid><description>&lt;h1 id="problem">Problem
+&lt;/h1>&lt;ul>
+&lt;li>Consider your product is going through a big overhaul and re-architecturing where the existing microservices might be broken into multiple ones or merged to single ones, there will be a big jumble of mess of routes at the ingress level.&lt;/li>
+&lt;li>This will make transitioning a bit hard as using canary based routing will gradually become complicated. So to simplify this canary setup, we take the routing matter into our own hands.&lt;/li>
+&lt;li>If you can use Consul and it works right for you, that might be the better option as Consul is more mature and production ready. You will be less likely to break things.&lt;/li>
+&lt;/ul>
+&lt;h1 id="solution">Solution
+&lt;/h1>&lt;ul>
+&lt;li>Architecture proposed:
+&lt;img src="https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture.png"
+width="2670"
+height="1093"
+srcset="https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture_hu6595140419807737708.png 480w, https://ankitp.com.np/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./architecture_hu2862933509379968795.png 1024w"
+loading="lazy"
+alt="High Level Architecture"
+class="gallery-image"
+data-flex-grow="244"
+data-flex-basis="586px"
+>&lt;/li>
+&lt;/ul>
+&lt;h1 id="implementation">Implementation
+&lt;/h1>&lt;ul>
+&lt;li>Its Almost same as auth implementation but will require a bit of scripting as we are not just checking status code to return 401 or to allow the traffic.&lt;/li>
+&lt;li>This can be easily achieved with &lt;a class="link" href="https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#configuration-snippet" target="_blank" rel="noopener"
+>configuration snippet&lt;/a> annotation in ingress-nginx.&lt;/li>
+&lt;li>We write a configuration snippet that sends request to the server that is responsible for getting the route information from the request body. Which more or less looks like one below:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl"> &lt;span class="n">apiVersion&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">networking&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">k8s&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">io&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">kind&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Ingress&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">metadata&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">docs&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">service&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">annotations&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">nginx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ingress&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">kubernetes&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">io&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">configuration&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">snippet&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">|&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">access_by_lua_block&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">cjson&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;cjson&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">http&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span> &lt;span class="s2">&amp;#34;resty.http&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">default_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;docs1&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">httpc&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">http&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">new&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">res&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">httpc&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="n">request_uri&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;http://authserver.ingress-nginx-helpers.svc.cluster.local:5000/find-backend&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">method&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;POST&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">body&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">encode&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="n">real_url&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">request_uri&lt;/span> &lt;span class="p">}),&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">headers&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Content-Type&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;application/json&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Token&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;token&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;cookie&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;cookie&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;x-api-key&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;x-api-key&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">decode_err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">decode&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">body&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">response&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">proxy_upstream_name&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">namespace&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">backend&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">service_port&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">balancer&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">nil&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">spec&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ingressClassName&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">rules&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="o">-&lt;/span> &lt;span class="n">host&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">hello&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">world&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">com&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">http&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">paths&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="o">-&lt;/span> &lt;span class="n">backend&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">service&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">docs1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">port&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">number&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">5000&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">path&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">/&lt;/span>&lt;span class="n">api&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">v1&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">docs1&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">docs&lt;/span>&lt;span class="o">/&lt;/span>&lt;span class="n">custom&lt;/span>&lt;span class="o">/&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">pathType&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Exact&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>This will match for path &lt;code>/api/v1/docs1/docs/custom/&lt;/code> and send request to the server to get backend information. Which in turn will be used to populate &lt;code>proxy_upstream_name&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Don&amp;rsquo;t forget to set &lt;code>ngx.ctx.balancer&lt;/code> to nil at last. &lt;a class="link" href="https://stackoverflow.com/questions/78717865/using-dynamic-backend-from-auth-like-server-in-nginx" target="_blank" rel="noopener"
+>Read here&lt;/a>&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;h1 id="enhancement">Enhancement
+&lt;/h1>&lt;ul>
+&lt;li>This for POC looks good but for real world application we try to make it as frictionless as possible.&lt;/li>
+&lt;/ul>
+&lt;h2 id="creating-a-ingress-nginx-plugin">Creating a ingress-nginx plugin
+&lt;/h2>&lt;ul>
+&lt;li>We create a plugin that does all of this and a flag that will determine weather to run this plugin or not for each ingress.&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-gdscript3" data-lang="gdscript3">&lt;span class="line">&lt;span class="cl"> &lt;span class="n">apiVersion&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">kind&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ConfigMap&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">metadata&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">name&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">custom&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">script&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">namespace&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">ingress&lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="n">nginx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">data&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">main&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">lua&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="o">|&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">ngx&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">_M&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">cjson&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;cjson&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">http&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">require&lt;/span> &lt;span class="s2">&amp;#34;resty.http&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">function&lt;/span> &lt;span class="n">_M&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">rewrite&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="ow">not&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">dynamic_plugin&lt;/span> &lt;span class="o">==&lt;/span> &lt;span class="s2">&amp;#34;on&amp;#34;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">final_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;eevee&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">httpc&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">http&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">new&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">res&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">httpc&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="n">request_uri&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s2">&amp;#34;http://authserver.ingress-nginx-helpers.svc.cluster.local:5000/find-backend&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">method&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;POST&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">body&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">encode&lt;/span>&lt;span class="p">({&lt;/span> &lt;span class="n">real_url&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">request_uri&lt;/span> &lt;span class="p">}),&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">headers&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Content-Type&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;application/json&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;Token&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;token&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;cookie&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;cookie&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;x-api-key&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">req&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">get_headers&lt;/span>&lt;span class="p">()[&lt;/span>&lt;span class="s1">&amp;#39;x-api-key&amp;#39;&lt;/span>&lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">local&lt;/span> &lt;span class="n">response&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">decode_err&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">cjson&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">decode&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">body&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="n">response&lt;/span> &lt;span class="n">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">final_backend&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">response&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">backend&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">proxy_upstream_name&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">namespace&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">final_backend&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="s2">&amp;#34;-&amp;#34;&lt;/span> &lt;span class="o">..&lt;/span> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="k">var&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">service_port&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">ngx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">ctx&lt;/span>&lt;span class="o">.&lt;/span>&lt;span class="n">balancer&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="n">nil&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">end&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">_M&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>As we can see there is a flag up top &lt;code>dynamic_plugin&lt;/code> that will be set in each ingress as a configurations snippet to trigger the execution of this script in each request.&lt;/li>
+&lt;li>The plugin code will be written in config-map and will be mounted to ingress controller kubernetes pod as a lua file in the plugins directory.&lt;/li>
+&lt;/ul>
+&lt;h2 id="mounting-the-plugin">Mounting the plugin
+&lt;/h2>&lt;ul>
+&lt;li>We add the volume mount in out controller deployment by adding following lines in the right place:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl"> volumes:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - configMap:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> defaultMode: 420
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: ngx-custom-script
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: lua-scripts-volume
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> volumeMounts:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> - mountPath: /etc/nginx/lua/plugins/modify_request/
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> name: lua-scripts-volume
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> readOnly: true
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>More about creating a nginx lua plugin &lt;a class="link" href="https://github.com/kubernetes/ingress-nginx/blob/main/rootfs/etc/nginx/lua/plugins/README.md" target="_blank" rel="noopener"
+>here&lt;/a>.&lt;/li>
+&lt;/ul>
+&lt;h2 id="running-the-plugin">Running the plugin
+&lt;/h2>&lt;ul>
+&lt;li>Create a new ingress, omitting the lua part and adding a configuration snippet annotation that sets the flag written in the plugin lua.&lt;/li>
+&lt;li>The annotations will be like:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl"> nginx.ingress.kubernetes.io/configuration-snippet: |
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> set $dynamic_plugin &amp;#34;on&amp;#34;;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>Now each request sent to the ingress with this variable set will have its route dynamically created as per your requirement.&lt;/li>
+&lt;/ul>
+&lt;h1 id="the-be-finder-server">The BE-finder server
+&lt;/h1>&lt;ul>
+&lt;li>This is the backbone of your ingress, so should be as fast as possible. Thus it should be written in efficient languages like Rust, Golang or C/C++.&lt;/li>
+&lt;li>The architecture proposed will first check for the required information in the redis and does not bother to send next request to database as we won&amp;rsquo;t have enough time and are okay with a few &lt;strong>leakage&lt;/strong> traffic.&lt;/li>
+&lt;li>The cache miss will trigger a goroutine that fetches the information from database for the next request to pick up.&lt;/li>
+&lt;/ul>
+&lt;h1 id="conclusion">Conclusion
+&lt;/h1>&lt;ul>
+&lt;li>We do not need complicated setup with service meshes to get intelligent routing.&lt;/li>
+&lt;li>Performance will be better than service mesh based solution.&lt;/li>
+&lt;li>Easy to setup and use.&lt;/li>
+&lt;/ul></description></item><item><title>Managing on demand ephemeral microservice development environment in a single k8s cluster.</title><link>https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./</link><pubDate>Sun, 23 Jun 2024 09:30:05 +0545</pubDate><guid>https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./</guid><description>&lt;h2 id="how-we-made-debugging-on-cloud-easier-without-costing-a-fortune">How we made debugging on cloud easier without costing a fortune.
+&lt;/h2>&lt;ul>
+&lt;li>
+&lt;h3 id="preface">Preface
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>Any organization will require good and flexible environment for every developer to test their code before merging it to the main branch.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>This is normally not required for small-medium monolith application but if the application is too big or consists of a lot microservices and we want to test integration between mutliple microservices. This does not occur often but occurs when you have a feature to implement that will span changes across a lot of microservices. There are other method to test these like writing unit tests for each api of microservice so that it adhers to certain schema and changing the schema as per the changes done and the expected value.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>But before any release the end to end test will anyhow be necessary.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;h3 id="the-problem">The Problem
+&lt;/h3>&lt;ul>
+&lt;li>All the pushes makes their code live on single shared environment (Testing Env) clashing feature specific tests.&lt;/li>
+&lt;li>If someone pushes faulty code, making a microservice halt, all the other ongoing test will be affected. This will be a major setback if there is some feature that requires quite a bit of time to test one feature.&lt;/li>
+&lt;li>Resulting in &lt;strong>Increased time for almost every feature release.&lt;/strong> Which sometime meant lost first mover advantage.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h3 id="the-solution">The Solution
+&lt;/h3>&lt;ul>
+&lt;li>
+&lt;h4 id="separate-resource-for-each-developer-or-shared-resources-among-a-team">Separate resource for each developer or shared resources among a team
+&lt;/h4>&lt;ul>
+&lt;li>This method will work but will be expensive as there will be constant resource consumption if any team forgets to release their resources, unless we think about premption of unused resources which will be difficult to implement or require cloud platform specific implementation or some terraform script to do so.&lt;/li>
+&lt;li>This will also allow team to use the resource allocated to them for something else then work. Its okay if you have enough resources as developers also need some breathing room to test new stuffs but will be difficult to maintain if you already have thousands of dollars of bill from your cloud provider every week.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h4 id="automatic-creation-of-required-resources-and-their-premption-on-inactivity-the-k8s-way">Automatic Creation of required resources and their premption on inactivity the k8s way.
+&lt;/h4>&lt;ul>
+&lt;li>This method was most suitable in our case as separating the resources for different teams to test means less traffic on existing shared Testing Env. This made such that we can decrease the resource footprint of the existing shared env.&lt;/li>
+&lt;li>We settled in the conclusion of creating 12 static namespaces that will house our entire product&amp;rsquo;s deployment. And making a mapping sheet to map teams to those namespaces.&lt;/li>
+&lt;li>Our company has unfettered mania of naming things after things in pokemon so we decided to go with the same flow to name our namespaces and environment by pokemon teams, 12 of them.&lt;/li>
+&lt;li>&lt;strong>Setup Minimal permission&lt;/strong>
+&lt;ul>
+&lt;li>Make it such that people have view access to the 12 namespaces defined so they can realtime stream container logs or look at the exact config of the deployment or pod.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Mapping people to namespaces&lt;/strong>
+&lt;ul>
+&lt;li>We wanted to make this part as effortless as possible for the developers along with decreasing our effort of managing the pipeline configuration. So we settled with Google Sheet.&lt;/li>
+&lt;li>We made a sheet with 3 colums: Slot, Usernames, Purpose. The first had list of 12 namespaces we created, second would house github usernames of guys currently claiming that space separated by comma, and the last would be some sort of remarks to indicate why was the slot occupied by that person.
+&lt;img src="https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image.png"
+width="1112"
+height="523"
+srcset="https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu8488635317762935928.png 480w, https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu3390564767661310282.png 1024w"
+loading="lazy"
+alt="Namespace mapping sheet"
+class="gallery-image"
+data-flex-grow="212"
+data-flex-basis="510px"
+>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>The Workflow&lt;/strong>
+&lt;ul>
+&lt;li>Someone pushes code to our backend repos.&lt;/li>
+&lt;li>Github workflow is triggred.
+&lt;ul>
+&lt;li>We used google&amp;rsquo;s gspread client and inlined python script to access the content of the namespace sheet.&lt;/li>
+&lt;li>Installs the backend helm package to the namespace found from the sheet.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Below is the actual step in github workflows that we used to interface gsheet with github workflow:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">shell&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">bash&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">run&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">|-&lt;/span>&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> pip3 install gspread==5.12 oauth2client
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> SLOT_INFO=$(python3 -c &amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> import gspread;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> from oauth2client.service_account import ServiceAccountCredentials;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> scope = [
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/spreadsheets&amp;#39;,
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/drive.file&amp;#39;,
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/drive&amp;#39;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> creds = ServiceAccountCredentials.from_json_keyfile_name(&amp;#39;$GOOGLE_APPLICATION_CREDENTIALS&amp;#39;, scope);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> client = gspread.authorize(creds);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> datas = client.open(&amp;#39;$SHEET_NAME&amp;#39;).sheet1.get_all_records();
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> print(f&amp;#39;slot mapping data: {datas}&amp;#39;);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> slot_of_interest = [val for val in datas if &amp;#39;$TRIGGER_EMAIL&amp;#39; in list(map(lambda e: e.strip(), val[&amp;#39;Emails&amp;#39;].split(&amp;#39;,&amp;#39;))) and &amp;#39;$TRIGGER_EMAIL&amp;#39; ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> [print(f&amp;#39;&amp;#39;&amp;#39;{data[&amp;#39;Slot&amp;#39;]}::{data[&amp;#39;Emails&amp;#39;]}&amp;#39;&amp;#39;&amp;#39;)for data in slot_of_interest ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#34; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo $SLOT_INFO
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> SLOT_INFO=$(echo &amp;#34;$SLOT_INFO&amp;#34; | grep -m 1 -E &amp;#39;::&amp;#39; ) || :
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ &amp;#34;$SLOT_INFO&amp;#34; == &amp;#34;&amp;#34; ]]; then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;User not allocated on any namepace. Please update the sheet at https://tinyurl.com/docsumo-namespace with your username ($TRIGGER_EMAIL).&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> exit 1
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;found slot details of current user. $SLOT_INFO&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> KUBE_NAMESPACE=$(echo $SLOT_INFO | awk -F&amp;#34;::&amp;#34; &amp;#39;{print $1}&amp;#39; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> IFS=$&amp;#39;,&amp;#39; read -ra EMAILS &amp;lt;&amp;lt;&amp;lt; $(echo $SLOT_INFO | awk -F&amp;#34;::&amp;#34; &amp;#39;{print $2}&amp;#39; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> HOST=${KUBE_NAMESPACE}.docsumo.com
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;HOST=$HOST&amp;#34; &amp;gt;&amp;gt; $GITHUB_ENV
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;KUBE_NAMESPACE=$KUBE_NAMESPACE&amp;#34; &amp;gt;&amp;gt; $GITHUB_ENV
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;final env values; HOST; $HOST, emails; ${EMAILS[@]}, KUBE_NAMESPACE; $KUBE_NAMESPACE&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>Each namespace will have a cronjob monitoring controller logs and if no request is coming for the last 1 hour, we delete all the resource consuming resources in that namespace, That will include all the deployments and statefulsets.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>The Premption&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>The premption of resource was handled by a cronjob installed in each namespace that ingested gcloud ingress logs to see if someone was using the namespace.&lt;/li>
+&lt;li>If there is no request logs in the last 1 hour, we delete all the resources of that namespace by doing helm uninstall on all the installed charts.&lt;/li>
+&lt;li>Below is the exact cronjob that we used for this purpose.&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;span class="lnt">45
+&lt;/span>&lt;span class="lnt">46
+&lt;/span>&lt;span class="lnt">47
+&lt;/span>&lt;span class="lnt">48
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">batch/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">CronJob&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">delete-on-inactivity&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{{&lt;span class="w"> &lt;/span>&lt;span class="l">.Release.Namespace }}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">schedule&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;0 * * * *&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">jobTemplate&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">serviceAccount&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">pod-manager&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">log-checker&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{{&lt;span class="w"> &lt;/span>&lt;span class="l">.Values.cronjobimage.repository }}:{{ .Values.cronjobimage.tag }}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">args&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">/bin/bash&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- -&lt;span class="l">c&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="p">|&lt;/span>&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> RELEASES=$(helm ls --short -n {{ .Release.Namespace }} | grep -vE &amp;#39;roles&amp;#39;)
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ ! &amp;#34;$RELEASES&amp;#34; ]]; then echo &amp;#34;Nothing found that can be deleted, exiting.&amp;#34;; exit 0; fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo $LOG_READER_CREDS | base64 -d &amp;gt; log_reader.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud auth activate-service-account --key-file=log_reader.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud config set project {{ .Values.project_id }}
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> OFFICE_TIME=(3 14)
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ $(date -u +%-H) -le ${OFFICE_TIME[1]} &amp;amp;&amp;amp; $(date -u +%-H) -ge ${OFFICE_TIME[0]} ]]; then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;Its office time..&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> TIME_PERIOD=`date -u -d&amp;#39;2 hour ago&amp;#39; +%Y-%m-%dT%TZ`
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> else
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> TIME_PERIOD=`date -u -d&amp;#39;1 hour ago&amp;#39; +%Y-%m-%dT%TZ`
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud logging read &amp;#34;timestamp &amp;gt;= \&amp;#34;${TIME_PERIOD}\&amp;#34; AND resource.type=\&amp;#34;k8s_container\&amp;#34; AND resource.labels.cluster_name=\&amp;#34;testing-cluster\&amp;#34; AND resource.labels.container_name=\&amp;#34;controller\&amp;#34; AND resource.labels.namespace_name=\&amp;#34;ingress-nginx\&amp;#34; AND jsonPayload.proxyUpstreamName~=\&amp;#34;{{ .Release.Namespace }}\&amp;#34;&amp;#34; --limit 10 --format=json &amp;gt; output.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> count=$(jq &amp;#39;. | length&amp;#39; output.json);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ $count -eq 0 ]];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;no Logs found in namespace &amp;#39;{{ .Release.Namespace }}&amp;#39; for last one hour, deleting all the resources.&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> helm ls --short -n {{ .Release.Namespace }} | grep -vE &amp;#39;roles|config&amp;#39; | xargs -I {} helm uninstall {} -n {{ .Release.Namespace }} --debug
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> else
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;logs found on last one hour, not deleting the releases&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">LOG_READER_CREDS&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">secretKeyRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">google-app-credential-logging&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GOOGLE_APPLICATION_CREDENTIALS_LOGGING&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">restartPolicy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">OnFailure&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>&lt;strong>Blockers faced in the way&lt;/strong>
+&lt;ul>
+&lt;li>We are using external secret operator to sync our backend secrets with GCP&amp;rsquo;s secret manager which when deleted in bulk was failing saying it failed to call some internal webhook. Probably overloading the internal webhook deployment of the operator.&lt;/li>
+&lt;li>We then decided to not delete configmaps and secrets from namespaces as they anyways would not take much resources.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h3 id="possible-enhancements">Possible enhancements
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>The next thing we can do is debug totally in cloud. I have another article written about how we can actually remote debug our python code in vscode. &lt;a class="link" href="https://ankitp.com.np/post/debugpy/" >Here&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>We setup each deployment to run debugpy instead of normal gunicorn and with a little bit of firewall setup and ip whitelisting, we can actually connect to remote debugger. &lt;strong>This allows for debugging in the actual hardware that the production server runs on which helps debug cloud specific issues in some instances&lt;/strong>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;h3 id="conclusion">Conclusion
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>First shield of defence: make each and every microservice autonomous so the need of integration tests are rare. But if your domain does not allow you to do that then this way of making separate test environment would be cheap and effective in the long term of your startup journey. In the end, each developer having access to a vm or multiple vagrant instances would come into picture but when the money and resources are limited, this approach is also not bad.&lt;/p>
+&lt;/li>
+&lt;/ul></description></item><item><title>Debugging a python program inside of a container</title><link>https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/</link><pubDate>Sat, 22 Jun 2024 10:45:58 +0545</pubDate><guid>https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/</guid><description>&lt;h1 id="debugging-python-inside-of-a-docker-container">Debugging python inside of a docker container
+&lt;/h1>&lt;h3 id="premises">Premises
+&lt;/h3>&lt;p>Lets say you are working on some legacy python project which has very obscure and obsolete dependencies and you now want to debug it.
+First lets pray to god that, this day does not come to anybody but if you are working on some project without standard practices on package management, this kind of situation is not uncommon.&lt;/p>
+&lt;h2 id="the-problem">The Problem
+&lt;/h2>&lt;p>Making a local dev envs.&lt;/p>
+&lt;ul>
+&lt;li>Even though pyenv and poetry to name a few is able to install different versions of python along with old deps, what if the packages are so old even pip does not have them.
+&lt;ul>
+&lt;li>A few old python packages do delete old version from pipy instead of yanking them that will cause the old programs to even stop running in the near future.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>The next problem is bloat if you have multiple of these shitty projects then you would not want your whole system to endure the cost of multiple old and obsolete python versions in the long run. Lets admit it nobody remembers to uninstall the things that we installed just to make things to working, instead we leave it in our system till we get out of space or some other things break due to that. The latter case will be the most troublesome because it might take another full day just to know the reason why your new program is not working and that the problem was you having an old version of something else.&lt;/li>
+&lt;/ul>
+&lt;h2 id="the-solution">The solution
+&lt;/h2>&lt;p>My solution to this problem is to debug inside of a container.
+You replicate the environment that your system was running on, inside of a container.&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>This is a breeze if you already had your program containerized.&lt;/p>
+&lt;ul>
+&lt;li>Get the container that has been running this whole time in production. Either docker pull or form sysadmin.&lt;/li>
+&lt;li>Here is one of the answer on how to load the image to your local docker instance if you don&amp;rsquo;t have access to docker pull image:&lt;/li>
+&lt;li>&lt;a class="link" href="https://stackoverflow.com/questions/37905763/how-do-i-download-docker-images-without-using-the-pull-command" target="_blank" rel="noopener"
+>https://stackoverflow.com/questions/37905763/how-do-i-download-docker-images-without-using-the-pull-command&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>But if you had not done so before, you need answers to following things from your sysadmin or anyone who has access to the running system:&lt;/p>
+&lt;ul>
+&lt;li>What is the OS? if Its Windows, Goodluck on that. Go the usual pyenv/poetry route.&lt;/li>
+&lt;li>The output of pip freeze and python version. Get hands on requirements.txt.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>Now containerize your application.&lt;/p>
+&lt;ul>
+&lt;li>Make a simple docker image having following steps:&lt;/li>
+&lt;li>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-Dockerfile" data-lang="Dockerfile">&lt;span class="line">&lt;span class="cl">&lt;span class="c">## The name and versions should be the one from your production system.&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="c">## It should be available in dockerhub as they normally have older images too.&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">FROM&lt;/span>&lt;span class="s"> debian:&amp;lt;tag&amp;gt;&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="c">## Install the required libraries. apt is for debian.&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">RUN&lt;/span> apt update &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> apt install .....&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="c">## Install debugpy to initialize remote debugging session.&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">RUN&lt;/span> pip install debugpy&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">COPY&lt;/span> ./requirements.txt /requirements.txt&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">RUN&lt;/span> pip install -r requirements.txt&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="c">## Some other pip installs you have some custom python packages to install.&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="c">## This so that you can get shell access to the docker without doing docker exec anything&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">&lt;/span>&lt;span class="k">CMD&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;bash&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="err">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>If you have a bit of complex program requirements like requiring redis or some other things then you can use a &lt;code>docker-compose.yaml&lt;/code> file. This was the case in my case. Feel free to take reference from dockercompose below:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">services&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">dev-container&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## I have this because I have access to do docker pull.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## If you have to build from dockerfile, you can give this any name,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## then uncomment the build part below&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">us-docker.pkg.dev/&amp;lt;project_id&amp;gt;/us.gcr.io/&amp;lt;image_name&amp;gt;:&amp;lt;image_tag&amp;gt;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># build:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># context: .&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># dockerfile: Dockerfile&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># args:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># - GITLAB_DEPLOY_TOKEN=&amp;lt;GITLAB_TOKEN&amp;gt;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## I needed this because I had custom old package to install from gitlab&amp;#39;s package registry.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">./app:/app&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">./service_account.json:/srv/key.json&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c">## this was required to access google specific resource inside the program&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">env_file&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="s2">&amp;#34;.env&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">environment&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">GOOGLE_APPLICATION_CREDENTIAL_PATH=/srv/key.json&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">FLASK_APP=app.app:app&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## uncomment this instead of network_mode : host if you have the ports inside the container occupied.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># ports:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># - 8080:8080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">network_mode&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;host&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">stdin_open&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">tty&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">command&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;bash&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c">## my program required redis too.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">redis-master&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># ports:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="c"># - &amp;#34;6379:6379&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">command&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-server --appendonly yes --requirepass 123456789&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">network_mode&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;host&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">env_file&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="s2">&amp;#34;.env&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;h3 id="debugpy-to-rescue">Debugpy to rescue
+&lt;/h3>&lt;ul>
+&lt;li>Debugpy a implementation of a &lt;strong>&lt;a class="link" href="https://microsoft.github.io/debug-adapter-protocol/" target="_blank" rel="noopener"
+>Debug Adapter Protocol&lt;/a>&lt;/strong> for python which is protocol developed my microsoft that defines abstract rules of communication between a IDE or text editor and the debugger. (PDB in our instance)&lt;/li>
+&lt;li>Its a remote debugging application developed by microsoft and used in vscode for debugging.&lt;/li>
+&lt;li>We then do &lt;code>docker run --name dev-container --env-file .env --network host -it -v &amp;lt;local_source_code_path&amp;gt;:&amp;lt;path_inside_container&amp;gt; &amp;lt;image_name&amp;gt;&lt;/code>&lt;/li>
+&lt;li>Now that your docker container is running, you can attach your current shell to the container:
+&lt;code> docker attach &amp;lt;container_name&amp;gt;&lt;/code>
+&lt;ul>
+&lt;li>container name is the name you gave while doing docker run. If you had skipped that part, docker will give you a random name. To get that name, you do &lt;code>docker ps&lt;/code> to show currently running container and get the random name from that.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h4 id="running-debugpy-inside-the-container">Running debugpy inside the container
+&lt;/h4>&lt;/li>
+&lt;li>Once you got inside of the shell of the running container, you run the program.
+&lt;code>python -m debugpy --listen 0.0.0.0:5678 -m flask run --host='0.0.0.0' --port=8080&lt;/code>&lt;/li>
+&lt;li>This is for flask application but if you are running something else modify it accordingly.
+For more information on debugpy and its options view its &lt;a class="link" href="https://github.com/microsoft/debugpy" target="_blank" rel="noopener"
+>github page&lt;/a>.&lt;/li>
+&lt;li>
+&lt;h4 id="connecting-your-vscode-instance-with-the-debugpy-running-inside-of-the-container">Connecting your vscode instance with the debugpy running inside of the container
+&lt;/h4>&lt;/li>
+&lt;li>Open vscode in the dir you mounted or the project dir.&lt;/li>
+&lt;li>Make a new launch.json or make vscode make it automaticaly for you.
+&lt;img src="https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image.png"
+width="542"
+height="192"
+srcset="https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image_hu16357426629487978787.png 480w, https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image_hu7910360251774123616.png 1024w"
+loading="lazy"
+alt="debug_pane"
+class="gallery-image"
+data-flex-grow="282"
+data-flex-basis="677px"
+>
+&lt;ul>
+&lt;li>Click on &lt;code>Create a launch.json file &amp;gt; Python Debugger &amp;gt; Remote Attach&lt;/code>.&lt;/li>
+&lt;li>Leave the hostname on &lt;code>localhost&lt;/code> and port to 5678 because we set it while launching debugpy in previous step.
+&lt;ul>
+&lt;li>We are keeping hostname to localhost and port to 5678 because we have &lt;code>--network host&lt;/code> while running docker container. If 5678 is somehow occupied in your system then forward the port 5678 to some other available port like 9874 in your system by using &lt;code>-p &amp;lt;local_port&amp;gt;:&amp;lt;container_port&amp;gt;&lt;/code> while doing docker run.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Now you will get something like this in your &lt;code>launch.json&lt;/code>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Use IntelliSense to learn about possible attributes.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="c1">// Hover to view descriptions of existing attributes.
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="c1">// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="nt">&amp;#34;version&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;0.2.0&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;configurations&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;name&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;Python Debugger: Remote Attach&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;type&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;debugpy&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;request&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;attach&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;connect&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;host&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;localhost&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;port&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">5678&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;pathMappings&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;localRoot&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;${workspaceFolder}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;remoteRoot&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;.&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;li>Fix the Path mappings with the paths you had while doing docker run in -v part. I had &lt;code>-v ./app:/app&lt;/code> so I will change the &lt;code>pathMapping&lt;/code> to something like:
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;pathMappings&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;localRoot&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;${workspaceFolder}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;remoteRoot&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;.&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Now while the container and the program you want to debug inside is running with debugpy, you set breakpoints like you normally used to do clicking beside the line numbers.
+&lt;img src="https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image-1.png"
+width="361"
+height="333"
+srcset="https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image-1_hu10191340369962095559.png 480w, https://ankitp.com.np/p/debugging-a-python-program-inside-of-a-container/image-1_hu12610747118726752422.png 1024w"
+loading="lazy"
+alt="line_number"
+class="gallery-image"
+data-flex-grow="108"
+data-flex-basis="260px"
+>&lt;/li>
+&lt;li>Press F5 to launch the debugging session and try to run the program normally. You can send the request to the server if its http server or something like that.&lt;/li>
+&lt;li>Once the code execution hits breakpoint, your program will pause automatically at the breakpoint and you can inspect variables, invoke functions and others.&lt;/li>
+&lt;/ul></description></item><item><title>Archives</title><link>https://ankitp.com.np/archives/</link><pubDate>Sun, 06 Mar 2022 00:00:00 +0000</pubDate><guid>https://ankitp.com.np/archives/</guid><description/></item><item><title>Links</title><link>https://ankitp.com.np/links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://ankitp.com.np/links/</guid><description>&lt;p>To use this feature, add &lt;code>links&lt;/code> section to frontmatter.&lt;/p>
+&lt;p>This page&amp;rsquo;s frontmatter:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">links&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">title&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GitHub&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">description&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GitHub is the world&amp;#39;s largest software development platform.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">website&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">https://github.com&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">title&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">TypeScript&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">description&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">TypeScript is a typed superset of JavaScript that compiles to plain JavaScript.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">website&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">https://www.typescriptlang.org&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ts-logo-128.jpg&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;code>image&lt;/code> field accepts both local and external images.&lt;/p></description></item><item><title>Search</title><link>https://ankitp.com.np/search/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://ankitp.com.np/search/</guid><description/></item></channel></rss>

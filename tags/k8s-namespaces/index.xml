@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>K8s-Namespaces on Ankit Paudel</title><link>https://ankitp.com.np/tags/k8s-namespaces/</link><description>Recent content in K8s-Namespaces on Ankit Paudel</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 23 Jun 2024 09:30:05 +0545</lastBuildDate><atom:link href="https://ankitp.com.np/tags/k8s-namespaces/index.xml" rel="self" type="application/rss+xml"/><item><title>Managing on demand ephemeral microservice development environment in a single k8s cluster.</title><link>https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./</link><pubDate>Sun, 23 Jun 2024 09:30:05 +0545</pubDate><guid>https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./</guid><description>&lt;h2 id="how-we-made-debugging-on-cloud-easier-without-costing-a-fortune">How we made debugging on cloud easier without costing a fortune.
+&lt;/h2>&lt;ul>
+&lt;li>
+&lt;h3 id="preface">Preface
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>Any organization will require good and flexible environment for every developer to test their code before merging it to the main branch.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>This is normally not required for small-medium monolith application but if the application is too big or consists of a lot microservices and we want to test integration between mutliple microservices. This does not occur often but occurs when you have a feature to implement that will span changes across a lot of microservices. There are other method to test these like writing unit tests for each api of microservice so that it adhers to certain schema and changing the schema as per the changes done and the expected value.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>But before any release the end to end test will anyhow be necessary.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;h3 id="the-problem">The Problem
+&lt;/h3>&lt;ul>
+&lt;li>All the pushes makes their code live on single shared environment (Testing Env) clashing feature specific tests.&lt;/li>
+&lt;li>If someone pushes faulty code, making a microservice halt, all the other ongoing test will be affected. This will be a major setback if there is some feature that requires quite a bit of time to test one feature.&lt;/li>
+&lt;li>Resulting in &lt;strong>Increased time for almost every feature release.&lt;/strong> Which sometime meant lost first mover advantage.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h3 id="the-solution">The Solution
+&lt;/h3>&lt;ul>
+&lt;li>
+&lt;h4 id="separate-resource-for-each-developer-or-shared-resources-among-a-team">Separate resource for each developer or shared resources among a team
+&lt;/h4>&lt;ul>
+&lt;li>This method will work but will be expensive as there will be constant resource consumption if any team forgets to release their resources, unless we think about premption of unused resources which will be difficult to implement or require cloud platform specific implementation or some terraform script to do so.&lt;/li>
+&lt;li>This will also allow team to use the resource allocated to them for something else then work. Its okay if you have enough resources as developers also need some breathing room to test new stuffs but will be difficult to maintain if you already have thousands of dollars of bill from your cloud provider every week.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h4 id="automatic-creation-of-required-resources-and-their-premption-on-inactivity-the-k8s-way">Automatic Creation of required resources and their premption on inactivity the k8s way.
+&lt;/h4>&lt;ul>
+&lt;li>This method was most suitable in our case as separating the resources for different teams to test means less traffic on existing shared Testing Env. This made such that we can decrease the resource footprint of the existing shared env.&lt;/li>
+&lt;li>We settled in the conclusion of creating 12 static namespaces that will house our entire product&amp;rsquo;s deployment. And making a mapping sheet to map teams to those namespaces.&lt;/li>
+&lt;li>Our company has unfettered mania of naming things after things in pokemon so we decided to go with the same flow to name our namespaces and environment by pokemon teams, 12 of them.&lt;/li>
+&lt;li>&lt;strong>Setup Minimal permission&lt;/strong>
+&lt;ul>
+&lt;li>Make it such that people have view access to the 12 namespaces defined so they can realtime stream container logs or look at the exact config of the deployment or pod.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Mapping people to namespaces&lt;/strong>
+&lt;ul>
+&lt;li>We wanted to make this part as effortless as possible for the developers along with decreasing our effort of managing the pipeline configuration. So we settled with Google Sheet.&lt;/li>
+&lt;li>We made a sheet with 3 colums: Slot, Usernames, Purpose. The first had list of 12 namespaces we created, second would house github usernames of guys currently claiming that space separated by comma, and the last would be some sort of remarks to indicate why was the slot occupied by that person.
+&lt;img src="https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image.png"
+width="1112"
+height="523"
+srcset="https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu8488635317762935928.png 480w, https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu3390564767661310282.png 1024w"
+loading="lazy"
+alt="Namespace mapping sheet"
+class="gallery-image"
+data-flex-grow="212"
+data-flex-basis="510px"
+>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>The Workflow&lt;/strong>
+&lt;ul>
+&lt;li>Someone pushes code to our backend repos.&lt;/li>
+&lt;li>Github workflow is triggred.
+&lt;ul>
+&lt;li>We used google&amp;rsquo;s gspread client and inlined python script to access the content of the namespace sheet.&lt;/li>
+&lt;li>Installs the backend helm package to the namespace found from the sheet.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Below is the actual step in github workflows that we used to interface gsheet with github workflow:&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">shell&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">bash&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">run&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">|-&lt;/span>&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> pip3 install gspread==5.12 oauth2client
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> SLOT_INFO=$(python3 -c &amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> import gspread;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> from oauth2client.service_account import ServiceAccountCredentials;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> scope = [
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/spreadsheets&amp;#39;,
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/drive.file&amp;#39;,
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#39;https://www.googleapis.com/auth/drive&amp;#39;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> creds = ServiceAccountCredentials.from_json_keyfile_name(&amp;#39;$GOOGLE_APPLICATION_CREDENTIALS&amp;#39;, scope);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> client = gspread.authorize(creds);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> datas = client.open(&amp;#39;$SHEET_NAME&amp;#39;).sheet1.get_all_records();
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> print(f&amp;#39;slot mapping data: {datas}&amp;#39;);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> slot_of_interest = [val for val in datas if &amp;#39;$TRIGGER_EMAIL&amp;#39; in list(map(lambda e: e.strip(), val[&amp;#39;Emails&amp;#39;].split(&amp;#39;,&amp;#39;))) and &amp;#39;$TRIGGER_EMAIL&amp;#39; ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> [print(f&amp;#39;&amp;#39;&amp;#39;{data[&amp;#39;Slot&amp;#39;]}::{data[&amp;#39;Emails&amp;#39;]}&amp;#39;&amp;#39;&amp;#39;)for data in slot_of_interest ];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> &amp;#34; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo $SLOT_INFO
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> SLOT_INFO=$(echo &amp;#34;$SLOT_INFO&amp;#34; | grep -m 1 -E &amp;#39;::&amp;#39; ) || :
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ &amp;#34;$SLOT_INFO&amp;#34; == &amp;#34;&amp;#34; ]]; then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;User not allocated on any namepace. Please update the sheet at https://tinyurl.com/docsumo-namespace with your username ($TRIGGER_EMAIL).&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> exit 1
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;found slot details of current user. $SLOT_INFO&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> KUBE_NAMESPACE=$(echo $SLOT_INFO | awk -F&amp;#34;::&amp;#34; &amp;#39;{print $1}&amp;#39; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> IFS=$&amp;#39;,&amp;#39; read -ra EMAILS &amp;lt;&amp;lt;&amp;lt; $(echo $SLOT_INFO | awk -F&amp;#34;::&amp;#34; &amp;#39;{print $2}&amp;#39; )
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> HOST=${KUBE_NAMESPACE}.docsumo.com
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;HOST=$HOST&amp;#34; &amp;gt;&amp;gt; $GITHUB_ENV
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;KUBE_NAMESPACE=$KUBE_NAMESPACE&amp;#34; &amp;gt;&amp;gt; $GITHUB_ENV
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;final env values; HOST; $HOST, emails; ${EMAILS[@]}, KUBE_NAMESPACE; $KUBE_NAMESPACE&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>Each namespace will have a cronjob monitoring controller logs and if no request is coming for the last 1 hour, we delete all the resource consuming resources in that namespace, That will include all the deployments and statefulsets.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>The Premption&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>The premption of resource was handled by a cronjob installed in each namespace that ingested gcloud ingress logs to see if someone was using the namespace.&lt;/li>
+&lt;li>If there is no request logs in the last 1 hour, we delete all the resources of that namespace by doing helm uninstall on all the installed charts.&lt;/li>
+&lt;li>Below is the exact cronjob that we used for this purpose.&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;span class="lnt">45
+&lt;/span>&lt;span class="lnt">46
+&lt;/span>&lt;span class="lnt">47
+&lt;/span>&lt;span class="lnt">48
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">batch/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">CronJob&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">delete-on-inactivity&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{{&lt;span class="w"> &lt;/span>&lt;span class="l">.Release.Namespace }}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">schedule&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;0 * * * *&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">jobTemplate&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">serviceAccount&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">pod-manager&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">log-checker&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>{{&lt;span class="w"> &lt;/span>&lt;span class="l">.Values.cronjobimage.repository }}:{{ .Values.cronjobimage.tag }}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">args&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="l">/bin/bash&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- -&lt;span class="l">c&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="p">|&lt;/span>&lt;span class="sd">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> RELEASES=$(helm ls --short -n {{ .Release.Namespace }} | grep -vE &amp;#39;roles&amp;#39;)
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ ! &amp;#34;$RELEASES&amp;#34; ]]; then echo &amp;#34;Nothing found that can be deleted, exiting.&amp;#34;; exit 0; fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo $LOG_READER_CREDS | base64 -d &amp;gt; log_reader.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud auth activate-service-account --key-file=log_reader.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud config set project {{ .Values.project_id }}
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> OFFICE_TIME=(3 14)
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ $(date -u +%-H) -le ${OFFICE_TIME[1]} &amp;amp;&amp;amp; $(date -u +%-H) -ge ${OFFICE_TIME[0]} ]]; then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;Its office time..&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> TIME_PERIOD=`date -u -d&amp;#39;2 hour ago&amp;#39; +%Y-%m-%dT%TZ`
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> else
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> TIME_PERIOD=`date -u -d&amp;#39;1 hour ago&amp;#39; +%Y-%m-%dT%TZ`
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> gcloud logging read &amp;#34;timestamp &amp;gt;= \&amp;#34;${TIME_PERIOD}\&amp;#34; AND resource.type=\&amp;#34;k8s_container\&amp;#34; AND resource.labels.cluster_name=\&amp;#34;testing-cluster\&amp;#34; AND resource.labels.container_name=\&amp;#34;controller\&amp;#34; AND resource.labels.namespace_name=\&amp;#34;ingress-nginx\&amp;#34; AND jsonPayload.proxyUpstreamName~=\&amp;#34;{{ .Release.Namespace }}\&amp;#34;&amp;#34; --limit 10 --format=json &amp;gt; output.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> count=$(jq &amp;#39;. | length&amp;#39; output.json);
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> if [[ $count -eq 0 ]];
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> then
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;no Logs found in namespace &amp;#39;{{ .Release.Namespace }}&amp;#39; for last one hour, deleting all the resources.&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> helm ls --short -n {{ .Release.Namespace }} | grep -vE &amp;#39;roles|config&amp;#39; | xargs -I {} helm uninstall {} -n {{ .Release.Namespace }} --debug
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> else
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> echo &amp;#34;logs found on last one hour, not deleting the releases&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="sd"> fi&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">LOG_READER_CREDS&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">secretKeyRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">google-app-credential-logging&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GOOGLE_APPLICATION_CREDENTIALS_LOGGING&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">restartPolicy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">OnFailure&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>&lt;strong>Blockers faced in the way&lt;/strong>
+&lt;ul>
+&lt;li>We are using external secret operator to sync our backend secrets with GCP&amp;rsquo;s secret manager which when deleted in bulk was failing saying it failed to call some internal webhook. Probably overloading the internal webhook deployment of the operator.&lt;/li>
+&lt;li>We then decided to not delete configmaps and secrets from namespaces as they anyways would not take much resources.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;h3 id="possible-enhancements">Possible enhancements
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>The next thing we can do is debug totally in cloud. I have another article written about how we can actually remote debug our python code in vscode. &lt;a class="link" href="https://ankitp.com.np/post/debugpy/" >Here&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>We setup each deployment to run debugpy instead of normal gunicorn and with a little bit of firewall setup and ip whitelisting, we can actually connect to remote debugger. &lt;strong>This allows for debugging in the actual hardware that the production server runs on which helps debug cloud specific issues in some instances&lt;/strong>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;h3 id="conclusion">Conclusion
+&lt;/h3>&lt;/li>
+&lt;li>
+&lt;p>First shield of defence: make each and every microservice autonomous so the need of integration tests are rare. But if your domain does not allow you to do that then this way of making separate test environment would be cheap and effective in the long term of your startup journey. In the end, each developer having access to a vm or multiple vagrant instances would come into picture but when the money and resources are limited, this approach is also not bad.&lt;/p>
+&lt;/li>
+&lt;/ul></description></item></channel></rss>

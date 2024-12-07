@@ -1,0 +1,200 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content="This article delves how we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch."><title>Managing on demand ephemeral microservice development environment in a single k8s cluster.</title>
+<link rel=canonical href=https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./><link rel=stylesheet href=/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css><meta property='og:title' content="Managing on demand ephemeral microservice development environment in a single k8s cluster."><meta property='og:description' content="This article delves how we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch."><meta property='og:url' content='https://ankitp.com.np/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./'><meta property='og:site_name' content='Ankit Paudel'><meta property='og:type' content='article'><meta property='article:section' content='Post'><meta property='article:tag' content='kubernetes'><meta property='article:tag' content='k8s-namespaces'><meta property='article:tag' content='ephemeral-env'><meta property='article:tag' content='cloud-testing'><meta property='article:published_time' content='2024-06-23T09:30:05+05:45'><meta property='article:modified_time' content='2024-06-23T09:30:05+05:45'><meta name=twitter:title content="Managing on demand ephemeral microservice development environment in a single k8s cluster."><meta name=twitter:description content="This article delves how we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch."><link rel="shortcut icon" href=/favicon.png></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/avatar_hu10216697898764085565.jpg width=300 height=313 class=site-logo loading=lazy alt=Avatar>
+</a><span class=emoji>🔎</span></figure><div class=site-meta><h1 class=site-name><a href=/>Ankit Paudel</a></h1><h2 class=site-description>Code, Cloud and AI; Taming all three</h2></div></header><ol class=menu-social><li><a href=https://github.com/ankitpaudel20 target=_blank title=GitHub rel=me><svg class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://github.com/in/ankitpaudel20 target=_blank title=Linkedin rel=me><svg viewBox="0 0 48 48" width="144" height="144" stroke="currentcolor" fill="none" stroke-width="1"><path d="M11.5 6C8.4802259 6 6 8.4802259 6 11.5v25C6 39.519774 8.4802259 42 11.5 42h25c3.019774.0 5.5-2.480226 5.5-5.5v-25C42 8.4802259 39.519774 6 36.5 6h-25zm0 3h25c1.398226.0 2.5 1.101774 2.5 2.5v25c0 1.398226-1.101774 2.5-2.5 2.5h-25C10.101774 39 9 37.898226 9 36.5v-25C9 10.101774 10.101774 9 11.5 9zm4 4a2.5 2.5.0 000 5 2.5 2.5.0 000-5zM14 20C13.447 20 13 20.447 13 21V34C13 34.553 13.447 35 14 35h3C17.553 35 18 34.553 18 34V21C18 20.447 17.553 20 17 20H14zm7 0C20.447 20 20 20.447 20 21V34C20 34.553 20.447 35 21 35h3C24.553 35 25 34.553 25 34V26.5c0-1.379 1.121-2.5 2.5-2.5S30 25.121 30 26.5V34C30 34.553 30.447 35 31 35h3C34.553 35 35 34.553 35 34V26c0-3.309-2.691-6-6-6C27.462 20 26.063 20.586016 25 21.541016V21C25 20.447 24.553 20 24 20H21z"/></svg></a></li><li><a href=https://twitter.com/ankitpaudel20000 target=_blank title=Twitter rel=me><svg class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 3.308 1.803 6.913 2.423 10.034 1.517 3.58-1.04 6.522-3.723 7.651-7.742a13.84 13.84.0 00.497-3.753C20.18 7.773 21.692 5.25 22 4.009z"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/archives/><svg class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/search/><svg class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><li><a href=/links/><svg class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M10 14a3.5 3.5.0 005 0l4-4a3.5 3.5.0 00-5-5l-.5.5"/><path d="M14 10a3.5 3.5.0 00-5 0l-4 4a3.5 3.5.0 005 5l.5-.5"/></svg>
+<span>Links</span></a></li><li class=menu-bottom-section><ol class=menu><li id=dark-mode-toggle><svg class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></ol></li></ol></aside><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">Table of contents</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#how-we-made-debugging-on-cloud-easier-without-costing-a-fortune>How we made debugging on cloud easier without costing a fortune.</a><ol><li><a href=#preface>Preface</a></li><li><a href=#the-problem>The Problem</a></li><li><a href=#the-solution>The Solution</a><ol><li><a href=#separate-resource-for-each-developer-or-shared-resources-among-a-team>Separate resource for each developer or shared resources among a team</a></li><li><a href=#automatic-creation-of-required-resources-and-their-premption-on-inactivity-the-k8s-way>Automatic Creation of required resources and their premption on inactivity the k8s way.</a></li></ol></li><li><a href=#possible-enhancements>Possible enhancements</a></li><li><a href=#conclusion>Conclusion</a></li></ol></li></ol></nav></div></section></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><header class=article-category><a href=/categories/kubernetes/>Kubernetes</a></header><div class=article-title-wrapper><h2 class=article-title><a href=/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./>Managing on demand ephemeral microservice development environment in a single k8s cluster.</a></h2><h3 class=article-subtitle>This article delves how we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch.</h3></div><footer class=article-time><div><svg class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jun 23, 2024</time></div><div><svg class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>7 minute read</time></div></footer></div></header><section class=article-content><h2 id=how-we-made-debugging-on-cloud-easier-without-costing-a-fortune>How we made debugging on cloud easier without costing a fortune.</h2><ul><li><h3 id=preface>Preface</h3></li><li><p>Any organization will require good and flexible environment for every developer to test their code before merging it to the main branch.</p></li><li><p>This is normally not required for small-medium monolith application but if the application is too big or consists of a lot microservices and we want to test integration between mutliple microservices. This does not occur often but occurs when you have a feature to implement that will span changes across a lot of microservices. There are other method to test these like writing unit tests for each api of microservice so that it adhers to certain schema and changing the schema as per the changes done and the expected value.</p></li><li><p>But before any release the end to end test will anyhow be necessary.</p></li><li><h3 id=the-problem>The Problem</h3><ul><li>All the pushes makes their code live on single shared environment (Testing Env) clashing feature specific tests.</li><li>If someone pushes faulty code, making a microservice halt, all the other ongoing test will be affected. This will be a major setback if there is some feature that requires quite a bit of time to test one feature.</li><li>Resulting in <strong>Increased time for almost every feature release.</strong> Which sometime meant lost first mover advantage.</li></ul></li><li><h3 id=the-solution>The Solution</h3><ul><li><h4 id=separate-resource-for-each-developer-or-shared-resources-among-a-team>Separate resource for each developer or shared resources among a team</h4><ul><li>This method will work but will be expensive as there will be constant resource consumption if any team forgets to release their resources, unless we think about premption of unused resources which will be difficult to implement or require cloud platform specific implementation or some terraform script to do so.</li><li>This will also allow team to use the resource allocated to them for something else then work. Its okay if you have enough resources as developers also need some breathing room to test new stuffs but will be difficult to maintain if you already have thousands of dollars of bill from your cloud provider every week.</li></ul></li><li><h4 id=automatic-creation-of-required-resources-and-their-premption-on-inactivity-the-k8s-way>Automatic Creation of required resources and their premption on inactivity the k8s way.</h4><ul><li>This method was most suitable in our case as separating the resources for different teams to test means less traffic on existing shared Testing Env. This made such that we can decrease the resource footprint of the existing shared env.</li><li>We settled in the conclusion of creating 12 static namespaces that will house our entire product&rsquo;s deployment. And making a mapping sheet to map teams to those namespaces.</li><li>Our company has unfettered mania of naming things after things in pokemon so we decided to go with the same flow to name our namespaces and environment by pokemon teams, 12 of them.</li><li><strong>Setup Minimal permission</strong><ul><li>Make it such that people have view access to the 12 namespaces defined so they can realtime stream container logs or look at the exact config of the deployment or pod.</li></ul></li><li><strong>Mapping people to namespaces</strong><ul><li>We wanted to make this part as effortless as possible for the developers along with decreasing our effort of managing the pipeline configuration. So we settled with Google Sheet.</li><li>We made a sheet with 3 colums: Slot, Usernames, Purpose. The first had list of 12 namespaces we created, second would house github usernames of guys currently claiming that space separated by comma, and the last would be some sort of remarks to indicate why was the slot occupied by that person.
+<img src=/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image.png width=1112 height=523 srcset="/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu8488635317762935928.png 480w, /p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./image_hu3390564767661310282.png 1024w" loading=lazy alt="Namespace mapping sheet" class=gallery-image data-flex-grow=212 data-flex-basis=510px></li></ul></li><li><strong>The Workflow</strong><ul><li>Someone pushes code to our backend repos.</li><li>Github workflow is triggred.<ul><li>We used google&rsquo;s gspread client and inlined python script to access the content of the namespace sheet.</li><li>Installs the backend helm package to the namespace found from the sheet.</li></ul></li></ul></li><li>Below is the actual step in github workflows that we used to interface gsheet with github workflow:</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=w>  </span><span class=nt>shell</span><span class=p>:</span><span class=w> </span><span class=l>bash</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>run</span><span class=p>:</span><span class=w> </span><span class=p>|-</span><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    pip3 install gspread==5.12 oauth2client
+</span></span></span><span class=line><span class=cl><span class=sd>    SLOT_INFO=$(python3 -c &#34;
+</span></span></span><span class=line><span class=cl><span class=sd>    import gspread;
+</span></span></span><span class=line><span class=cl><span class=sd>    from oauth2client.service_account import ServiceAccountCredentials;
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    scope = [
+</span></span></span><span class=line><span class=cl><span class=sd>      &#39;https://www.googleapis.com/auth/spreadsheets&#39;, 
+</span></span></span><span class=line><span class=cl><span class=sd>      &#39;https://www.googleapis.com/auth/drive.file&#39;, 
+</span></span></span><span class=line><span class=cl><span class=sd>      &#39;https://www.googleapis.com/auth/drive&#39; 
+</span></span></span><span class=line><span class=cl><span class=sd>    ];
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    creds = ServiceAccountCredentials.from_json_keyfile_name(&#39;$GOOGLE_APPLICATION_CREDENTIALS&#39;, scope);
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    client = gspread.authorize(creds);
+</span></span></span><span class=line><span class=cl><span class=sd>    datas = client.open(&#39;$SHEET_NAME&#39;).sheet1.get_all_records();
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    print(f&#39;slot mapping data: {datas}&#39;);
+</span></span></span><span class=line><span class=cl><span class=sd>    slot_of_interest = [val for val in datas if &#39;$TRIGGER_EMAIL&#39; in list(map(lambda e: e.strip(), val[&#39;Emails&#39;].split(&#39;,&#39;))) and &#39;$TRIGGER_EMAIL&#39; ];
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    [print(f&#39;&#39;&#39;{data[&#39;Slot&#39;]}::{data[&#39;Emails&#39;]}&#39;&#39;&#39;)for data in slot_of_interest ];
+</span></span></span><span class=line><span class=cl><span class=sd>    &#34; )
+</span></span></span><span class=line><span class=cl><span class=sd>    echo $SLOT_INFO
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    SLOT_INFO=$(echo &#34;$SLOT_INFO&#34; | grep -m 1 -E &#39;::&#39; ) || :
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    if [[ &#34;$SLOT_INFO&#34; == &#34;&#34; ]]; then
+</span></span></span><span class=line><span class=cl><span class=sd>      echo &#34;User not allocated on any namepace. Please update the sheet at https://tinyurl.com/docsumo-namespace with your username ($TRIGGER_EMAIL).&#34;
+</span></span></span><span class=line><span class=cl><span class=sd>      exit 1
+</span></span></span><span class=line><span class=cl><span class=sd>    fi
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    echo &#34;found slot details of current user. $SLOT_INFO&#34;
+</span></span></span><span class=line><span class=cl><span class=sd>    KUBE_NAMESPACE=$(echo $SLOT_INFO | awk -F&#34;::&#34; &#39;{print $1}&#39; )
+</span></span></span><span class=line><span class=cl><span class=sd>    IFS=$&#39;,&#39; read -ra EMAILS &lt;&lt;&lt; $(echo $SLOT_INFO | awk -F&#34;::&#34; &#39;{print $2}&#39; )
+</span></span></span><span class=line><span class=cl><span class=sd>    HOST=${KUBE_NAMESPACE}.docsumo.com
+</span></span></span><span class=line><span class=cl><span class=sd>    echo &#34;HOST=$HOST&#34; &gt;&gt; $GITHUB_ENV
+</span></span></span><span class=line><span class=cl><span class=sd>    echo &#34;KUBE_NAMESPACE=$KUBE_NAMESPACE&#34; &gt;&gt; $GITHUB_ENV
+</span></span></span><span class=line><span class=cl><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    echo &#34;final env values; HOST; $HOST, emails; ${EMAILS[@]}, KUBE_NAMESPACE; $KUBE_NAMESPACE&#34;</span><span class=w>    
+</span></span></span></code></pre></td></tr></table></div></div><ul><li>Each namespace will have a cronjob monitoring controller logs and if no request is coming for the last 1 hour, we delete all the resource consuming resources in that namespace, That will include all the deployments and statefulsets.</li></ul></li><li><p><strong>The Premption</strong></p><ul><li>The premption of resource was handled by a cronjob installed in each namespace that ingested gcloud ingress logs to see if someone was using the namespace.</li><li>If there is no request logs in the last 1 hour, we delete all the resources of that namespace by doing helm uninstall on all the installed charts.</li><li>Below is the exact cronjob that we used for this purpose.</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=w>  </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>batch/v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>CronJob</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>delete-on-inactivity</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span>{{<span class=w> </span><span class=l>.Release.Namespace }}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>schedule</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;0 * * * *&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>jobTemplate</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>serviceAccount</span><span class=p>:</span><span class=w> </span><span class=l>pod-manager</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>log-checker</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>image</span><span class=p>:</span><span class=w> </span>{{<span class=w> </span><span class=l>.Values.cronjobimage.repository }}:{{ .Values.cronjobimage.tag }}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>args</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span>- <span class=l>/bin/bash</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span>- -<span class=l>c</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span>- <span class=p>|</span><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>                RELEASES=$(helm ls --short -n {{ .Release.Namespace }} | grep -vE &#39;roles&#39;)
+</span></span></span><span class=line><span class=cl><span class=sd>                if [[ ! &#34;$RELEASES&#34; ]]; then echo &#34;Nothing found that can be deleted, exiting.&#34;; exit 0; fi
+</span></span></span><span class=line><span class=cl><span class=sd>                echo $LOG_READER_CREDS | base64 -d &gt; log_reader.json
+</span></span></span><span class=line><span class=cl><span class=sd>                gcloud auth activate-service-account --key-file=log_reader.json
+</span></span></span><span class=line><span class=cl><span class=sd>                gcloud config set project {{ .Values.project_id }}
+</span></span></span><span class=line><span class=cl><span class=sd>                OFFICE_TIME=(3 14)
+</span></span></span><span class=line><span class=cl><span class=sd>                if [[ $(date -u +%-H) -le ${OFFICE_TIME[1]} &amp;&amp; $(date -u +%-H) -ge ${OFFICE_TIME[0]} ]]; then
+</span></span></span><span class=line><span class=cl><span class=sd>                  echo &#34;Its office time..&#34;
+</span></span></span><span class=line><span class=cl><span class=sd>                  TIME_PERIOD=`date -u -d&#39;2 hour ago&#39; +%Y-%m-%dT%TZ`
+</span></span></span><span class=line><span class=cl><span class=sd>                else
+</span></span></span><span class=line><span class=cl><span class=sd>                  TIME_PERIOD=`date -u -d&#39;1 hour ago&#39; +%Y-%m-%dT%TZ`
+</span></span></span><span class=line><span class=cl><span class=sd>                fi
+</span></span></span><span class=line><span class=cl><span class=sd>                gcloud logging read &#34;timestamp &gt;= \&#34;${TIME_PERIOD}\&#34; AND resource.type=\&#34;k8s_container\&#34; AND resource.labels.cluster_name=\&#34;testing-cluster\&#34; AND resource.labels.container_name=\&#34;controller\&#34; AND resource.labels.namespace_name=\&#34;ingress-nginx\&#34; AND jsonPayload.proxyUpstreamName~=\&#34;{{ .Release.Namespace }}\&#34;&#34; --limit 10 --format=json &gt; output.json
+</span></span></span><span class=line><span class=cl><span class=sd>                count=$(jq &#39;. | length&#39; output.json);
+</span></span></span><span class=line><span class=cl><span class=sd>                if [[ $count -eq 0 ]];
+</span></span></span><span class=line><span class=cl><span class=sd>                then
+</span></span></span><span class=line><span class=cl><span class=sd>                  echo &#34;no Logs found in namespace &#39;{{ .Release.Namespace }}&#39; for last one hour, deleting all the resources.&#34;
+</span></span></span><span class=line><span class=cl><span class=sd>                  helm ls --short -n {{ .Release.Namespace }} | grep -vE &#39;roles|config&#39; | xargs -I {} helm uninstall {} -n {{ .Release.Namespace }} --debug
+</span></span></span><span class=line><span class=cl><span class=sd>                else
+</span></span></span><span class=line><span class=cl><span class=sd>                  echo &#34;logs found on last one hour, not deleting the releases&#34;
+</span></span></span><span class=line><span class=cl><span class=sd>                fi</span><span class=w>                
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>env</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>LOG_READER_CREDS</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                    </span><span class=nt>secretKeyRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>google-app-credential-logging</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                      </span><span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=l>GOOGLE_APPLICATION_CREDENTIALS_LOGGING</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>restartPolicy</span><span class=p>:</span><span class=w> </span><span class=l>OnFailure</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><ul><li><strong>Blockers faced in the way</strong><ul><li>We are using external secret operator to sync our backend secrets with GCP&rsquo;s secret manager which when deleted in bulk was failing saying it failed to call some internal webhook. Probably overloading the internal webhook deployment of the operator.</li><li>We then decided to not delete configmaps and secrets from namespaces as they anyways would not take much resources.</li></ul></li></ul></li></ul></li><li><h3 id=possible-enhancements>Possible enhancements</h3></li><li><p>The next thing we can do is debug totally in cloud. I have another article written about how we can actually remote debug our python code in vscode. <a class=link href=/post/debugpy/>Here</a></p></li><li><p>We setup each deployment to run debugpy instead of normal gunicorn and with a little bit of firewall setup and ip whitelisting, we can actually connect to remote debugger. <strong>This allows for debugging in the actual hardware that the production server runs on which helps debug cloud specific issues in some instances</strong></p></li><li><h3 id=conclusion>Conclusion</h3></li><li><p>First shield of defence: make each and every microservice autonomous so the need of integration tests are rare. But if your domain does not allow you to do that then this way of making separate test environment would be cheap and effective in the long term of your startup journey. In the end, each developer having access to a vm or multiple vagrant instances would come into picture but when the money and resources are limited, this approach is also not bad.</p></li></ul></section><footer class=article-footer><section class=article-tags><a href=/tags/kubernetes/>Kubernetes</a>
+<a href=/tags/k8s-namespaces/>K8s-Namespaces</a>
+<a href=/tags/ephemeral-env/>Ephemeral-Env</a>
+<a href=/tags/cloud-testing/>Cloud-Testing</a></section><section class=article-copyright><svg class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/p/request-body-aware-dynamic-routing-in-ingress-nginx-using-custom-plugins./><div class=article-details><h2 class=article-title>Request body aware dynamic routing in ingress nginx using custom plugins.</h2></div></a></article></div></div></aside><div class=disqus-container><div id=disqus_thread></div><script>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//hugo-theme-stack.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div><style>.disqus-container{background-color:var(--card-background);border-radius:var(--card-border-radius);box-shadow:var(--shadow-l1);padding:var(--card-padding)}</style><script>window.addEventListener("onColorSchemeChange",e=>{typeof DISQUS=="object"&&DISQUS.reset({reload:!0})})</script><footer class=site-footer><section class=copyright>&copy;
+2020 -
+2024 Ankit Paudel</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.29.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script></body></html>
