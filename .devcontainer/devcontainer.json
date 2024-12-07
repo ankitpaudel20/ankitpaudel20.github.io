@@ -15,19 +15,34 @@
 			"NODE_VERSION": "14"
 		}
 	},
-
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
 	// Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
 			// Set *default* container specific settings.json values on container create.
 			"settings": { 
-				"html.format.templating": true
+				"html.format.templating": true,
+				"terminal.integrated.defaultProfile.linux": "zsh"
 			},
 			
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"tamasfe.even-better-toml",
+				// Liquid tags auto-complete
+				"killalau.vscode-liquid-snippets",
+				// Liquid syntax highlighting and formatting
+				"Shopify.theme-check-vscode",
+				// Shell
+				"timonwong.shellcheck",
+				"mkhl.shfmt",
+				// Common formatter
+				"EditorConfig.EditorConfig",
+				"esbenp.prettier-vscode",
+				"stylelint.vscode-stylelint",
+				"yzhang.markdown-all-in-one",
+				// Git
+				"mhutchie.git-graph",
 				"davidanson.vscode-markdownlint"
 			]
 		}
