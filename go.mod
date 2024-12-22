@@ -1,4 +1,4 @@
-module github.com/CaiJimmy/hugo-theme-stack-starter
+module github.com/ankitpaudel20/ankitpaudel20.github.io
 
 go 1.17
 
