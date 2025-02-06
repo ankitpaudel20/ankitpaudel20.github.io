@@ -24,7 +24,7 @@ tags:
 - This will make transitioning a bit hard as using canary based routing will gradually become complicated. So to simplify this canary setup, we take the routing matter into our own hands.
 - If you can use Consul and it works right for you, that might be the better option as Consul is more mature and production ready. You will be less likely to break things.
 
-# Solution
+# The Solution
 - Architecture proposed:
 ![High Level Architecture](architecture.png)
 
