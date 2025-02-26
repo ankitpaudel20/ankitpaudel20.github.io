@@ -19,7 +19,7 @@ subtitle = "Code, Cloud and AI; Taming all three"
 [sidebar.avatar]
 enabled = true
 local = true
-src = "img/avatar.jpg"
+src = "img/avatar.JPG"
 
 [article]
 headingAnchor = false
