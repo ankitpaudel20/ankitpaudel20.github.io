@@ -1,7 +1,7 @@
 ---
 title: "Mongodb triggers and change streams" # Title of the blog post.
 date: 2025-02-16T03:32:36+05:45
-description: "Using triggers and change-streams for near realtime data synchronization cross technologies" # Description used for search engine.
+description: "Using triggers and change-streams for near realtime data synchronization across systems" # Description used for search engine.
 featured: true # Sets if post is a featured post, making appear on the home page side bar.
 draft: false # Sets whether to render this page. Draft of true will not be rendered.
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
