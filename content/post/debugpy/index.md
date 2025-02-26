@@ -4,7 +4,7 @@ date: 2024-06-22T10:45:58+05:45 # Date of post creation.
 description: "Instead of spending hours on setting up a dev env in your local machine just for a single bughunt, do it inside a container and delete the container and image after the job. Zero Bloat." # Description used for search engine.
 # summary: "Instead of spending hours on setting up a dev env in your local machine just for a single debug, do it inside a container and delete the container and image after the job. Zero Bloat"
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
-featureImage: "docker_python_version.webp" # Sets featured image on blog post.
+image: "docker_python_version.webp" # Sets featured image on blog post.
 featureImageAlt: 'Kudos to real python for this great illustration showing python versions in a container' # Alternative text for featured image.
 # image: "python_docker.jpg" # Sets thumbnail image appearing inside card on homepage.
 codeMaxLines: 20 # Override global value for how many lines within a code block before auto-collapsing.
