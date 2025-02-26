@@ -130,3 +130,6 @@ tags:
     - If the volume says its detached and Faulted, you can just reduce the replicas by editing yaml of the volume, make it 1, edit the remaining replica,  set the field containing attached node information and `failedAt` both to an empty string.
 
 # The Conclusion
+
+- Longhorn is not stable enough or is difficult to stabilize it in spot instance cluster.
+- If it does not work efficiently in a spot instance cluster, its not reliable enough to ship to production.
