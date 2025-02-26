@@ -133,10 +133,12 @@ repoID = "R_kgDONaULjA"
 category = "General"
 categoryID = "DIC_kwDONaULjM4CnXFz"
 mapping = "pathname"
-lightTheme = ""
-darkTheme = "dark"
+strict = 0
+darkTheme = "gruvbox_dark"
 reactionsEnabled = 1
-emitMetadata = 1
+emitMetadata = 0
+lang = "en"
+inputPosition = "top"
 
 [comments.gitalk]
 owner = ""

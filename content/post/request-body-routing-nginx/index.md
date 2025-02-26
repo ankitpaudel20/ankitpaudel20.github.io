@@ -1,7 +1,7 @@
 ---
 title: "Request body aware dynamic routing in ingress nginx using custom plugins." # Title of the blog post.
 date: 2024-07-10T00:44:36+05:45
-description: "How we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch." # Description used for search engine.
+description: "Using lua to extend the functionality of ingress-nginx." # Description used for search engine.
 featured: true # Sets if post is a featured post, making appear on the home page side bar.
 draft: false # Sets whether to render this page. Draft of true will not be rendered.
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
@@ -153,8 +153,8 @@ tags:
 - Now each request sent to the ingress with this variable set will have its route dynamically created as per your requirement.
 
 # The BE-finder server
-- This is the backbone of your ingress, so should be as fast as possible. Thus it should be written in efficient languages like Rust, Golang or C/C++.
-- The architecture proposed will first check for the required information in the redis and does not bother to send next request to database as we won't have enough time and are okay with a few **leakage** traffic.
+- This is the backbone of your ingress, so should be as fast as possible. Thus it should be written in efficient languages like Rust, Golang or C/C++. I used Go.
+- The application will use redis or inmemory cache to speed things if your data does not change frequently. If this does not suite your needs, you can setup cron like system that triggers refresh of keys in the cache periodically.
 - The cache miss will trigger a goroutine that fetches the information from database for the next request to pick up.
 
 # Conclusion
