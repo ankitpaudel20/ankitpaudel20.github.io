@@ -1,6 +1,6 @@
 ---
 title: "Introduction to WSGI and gunicorn"
-description: "Tldr and intro to gunicorn so that you can know what actually is going on when something strange happens in production" 
+description: "Tldr and intro to gunicorn so you can debug overlooked issue in production." 
 date: 2024-12-22T11:41:14Z
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
 image: 
@@ -33,7 +33,7 @@ Outline:
 
 - Originally, python was not made to develop webservers, but due to its simplicity and very easy learning curve, along time a few web frameworks started popping.
 - Different frameworks/tools had their own serving method that tried to alleviate the fact that python was a single threaded application and io calls would block the application from receiving any further requests.
-- Solution: use threads, multiple python processes and combination.
+- Solution: use threads, multiple python processes and their combination.
 - This issue led to development of some standard interface that all frameworks can adhere to so that frameworks don't have to worry about how to manage concurrency and be best on what they do, acting as an easy and fast tool to create a httpserver.
 
 # What is WSGI
