@@ -71,7 +71,6 @@ tags:
   - Not bad numbers IMHO.
   - But I had been missing one critical thing in this experiment. The data in the change stream had ony the delta. i.e. just the actual oplog
   - I had already presented this as a good possible solution of the problem, that made my heart melt a little.
-- After this setback in my shoulders already, doing a task which was not assigned to me at the first place, had me going a bit deeper into trying things to make this work.
 - There was a option that you could pass to watch function of mongo client that is supposed to give us the updated document called `fullDocument:updateLookup`.
   - This gave me the results that my teammates were getting. The latencies shot up to 300-400 secs till the ops/sec died down in the primary node, after which all the pending oplogs would flood at once.
 - This had me thinking, this is one of the basic requirement of a good database engine, why would mongodb be so bad at this.
@@ -80,6 +79,14 @@ tags:
 - After enabling this for the collection in question we got the numbers we were looking for. The latencies were almost equivalent to the first part but with the data we want.
   ![metrics after right config](final_optimized_metrics.png)
 
+
+## The Challenges
+- **High Availability**
+  - How do you ensure that all the data has been synced? What if the system responsible for sync is down?
+  - Change streams are cursor based systems so we can maintain leaderboard or cache like system in redis that keeps track of some cursor id and a newly started sync application can use that to resume its job.
+    - What if the changestreams backlog crosses limit in the mongo side? Mongodb must have some limit on how much change oplog can it store before sending it to changestreams? 
+  - Answers to these question still requires more research on architecture of mongo before we implement this in production.
+
 ## Conclusion
 
-- Dig a little deeper if things seem too good to be true. This was a feature that every mainstream popular database should implement, but we did not research it throughly before coming into conclusion.
+- We can use mongo change streams for reliable and near realtime data sync across systems where additional processing needs to be done for each database operation.
