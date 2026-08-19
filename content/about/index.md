@@ -10,69 +10,52 @@ showPagination: false
 showTableOfContents: true
 ---
 
-Hi, I'm **Ankit Paudel** 👋
+Hi, I'm **Ankit** 👋
 
-I'm a Senior SRE / Platform Engineer at [Docsumo](https://www.docsumo.com), a document-AI company, where I build and run infrastructure that processes millions of documents a month. I work across the stack — Kubernetes platforms, Python/Go backend services, and the developer tooling in between — from Kathmandu, Nepal.
+I'm a platform / SRE engineer at [Docsumo](https://www.docsumo.com), a document-AI company, working from Kathmandu, Nepal. My day job is keeping a fleet of Kubernetes clusters and Python/Go services happy while they chew through millions of documents a month — and building the tooling so other engineers can ship without thinking about the plumbing underneath.
+
+I like the messy middle of infrastructure: the part where "it works on my machine" meets "it has to work for everyone, at 3 a.m., during a node failure." Most of what I write on this blog comes from that place.
 
 {{< button href="/cv/ankitpaudel-cv.pdf" target="_blank" >}}
 Download CV
 {{< /button >}}
 
-## What I do now
+## Things I've been up to at Docsumo
 
-At Docsumo I own large parts of the platform:
+- Rebuilt our document-processing pipeline into a distributed system that comfortably moves millions of documents a month.
+- Helped the team move critical workflows onto **Temporal** — most of our clients run on it now, and it fails far more gracefully than what it replaced.
+- Built **on-demand ephemeral dev environments** that spin up a full product deployment when you need one and quietly tear it down when you don't — [I wrote about how](/posts/ephemeral_env/).
+- Moved live production traffic from Ingress to the **Gateway API** without anyone noticing. Zero downtime — the good kind of boring.
+- Look after observability (**Prometheus + Thanos** — [there's a post](/posts/prom-thanos/)) and storage (**Longhorn** — [that one too](/posts/rwx-in-k8s-longhorn/)).
+- Run a self-hosted **Redis Sentinel** cluster that shrugs off node failures and upgrades.
+- Built a **feature-flag service** on the OpenFeature spec so blue-green releases stopped being scary.
+- Made credential rotation routine across our cloud workloads, and built **sandboxes that can safely run arbitrary Python**.
+- Carry the pager, define the SLIs, keep the SLAs honest.
 
-- Architected and run a **distributed document-processing pipeline** that reliably handles millions of documents a month.
-- Led the design of a **fault-tolerant workflow system on Temporal**, now serving 90% of clients.
-- Built automation for **on-demand ephemeral development environments** inside a single Kubernetes cluster — [I wrote about how](/posts/ephemeral_env/).
-- Migrated live production traffic from **Ingress to Gateway API with zero downtime**.
-- Run **HA observability with Prometheus + Thanos** ([post](/posts/prom-thanos/)) and **HA persistent storage with Longhorn** ([post](/posts/rwx-in-k8s-longhorn/)).
-- Operate a self-hosted **Redis Sentinel cluster** with next-to-zero downtime through node failures and upgrades.
-- Built a **feature-flag server on the OpenFeature spec** enabling blue-green deployments.
-- Provisioned **secure sandboxes for executing arbitrary Python code**, and made credential rotation routine across cloud-native workloads with secret/parameter management services.
-- Define **SLIs and keep SLAs honest** across critical production systems; on-call incident responder.
+## How I use AI
 
-## AI in my workflow
+I'm not training foundation models — I'm the person who wires AI into everyday engineering work and actually gets value out of it:
 
-I treat AI tooling as part of the engineering toolchain, not a novelty:
+- **Agentic CLI tools** (Claude Code and friends) are my daily driver for writing code, debugging, and poking at infrastructure — with guardrails in place so nothing touches production without a human saying so.
+- **LLMs during incidents** — log analysis, hypothesis generation, and the endless one-off scripts that ops work produces.
+- The underlying tech isn't a black box to me either: I did a machine-learning micro-degree at FuseMachines and NAAMI's Winter School in AI, back before any of this was cool.
 
-- **Agentic coding tools are my daily driver** — CLI agents (Claude Code and similar) for writing code, debugging, and infrastructure work, wired into my terminal workflow with guardrails around anything production-facing.
-- **LLM-assisted operations** — incident debugging, log analysis, and generating one-off automation during ops work.
-- Before the LLM era I completed a **Machine Learning micro-degree** (FuseMachines) and NAAMI's **Winter School in AI**, so I'm comfortable one level below the API too.
+## Where I've worked
 
-## Experience
+**Docsumo** · Remote / Singapore — joined in 2023 as a DevOps/SRE engineer taming multi-tenant Kubernetes; since 2025 I'm the senior platform/SRE engineer. Along the way: migrated the whole org from GitLab to GitHub (and halved the tooling bill), cut database latency by about a third through data-model rework, and set up autoscaling with Keda/HPA that actually tracks load.
 
-**Docsumo** — Remote / Singapore
-- *Senior SRE / DevOps / Platform Engineer* · Jan 2025 – present
-- *DevOps / SRE Engineer* · Jan 2023 – Jan 2025 — multi-tenant Kubernetes ownership, GitLab→GitHub migration cutting operational costs by half, 30%+ database-latency reduction through data-model rework, Keda/HPA autoscaling, CI/CD for cross-platform builds and heterogeneous deploy targets.
+**Yasok Systems** · Kathmandu — backend engineer from 2021 to 2022. Built site-wide search with Python + Meilisearch, made a Node.js ERP backend noticeably faster with Redis caching, and put together an async notification system on AWS SQS + Lambda.
 
-**Yasok Systems** — Kathmandu, Nepal
-- *Software Engineer* · Feb 2021 – Dec 2022 — site-wide search with Python + Meilisearch, Node.js ERP backend, 50%+ performance gains via Redis caching layers, async notification system on AWS SQS + Lambda, search clusters across Elasticsearch, Meilisearch, and Azure.
+**FuseMachines** · Kathmandu — AI fellow in 2021, where the ML micro-degree happened.
 
-**FuseMachines** — Kathmandu, Nepal
-- *AI Fellow* · Sep 2021 – Dec 2021 — Machine Learning and Deep Learning micro-degree; trained and evaluated ML models on real datasets.
+## Beyond work
 
-## Projects
+Things I've built for fun — a 3D renderer, algorithm visualizers, a tank game — live on the [projects page](/projects/).
 
-- [**3D renderer from scratch**](https://github.com/ankitpaudel20/simple3drenderer) (C++, OpenGL) — renders arbitrary `.obj` models; includes a software rasterizer implementing the primitive triangle-rendering algorithms low-level graphics drivers use.
-- [**Sorting & pathfinding visualizer**](https://github.com/ankitpaudel20/Algorithms-Visualizer) (C++, SDL2) — teaching aid visualizing sorting, pathfinding, and spanning-tree algorithms.
-- [**Realtime text similarity**](https://github.com/ankitpaudel20/realtime-text-similarity-frontend) (Python, Flask, scikit-learn) — sentence-transformer-based similarity detection built to help professors avoid repeating exam questions.
+I studied Computer Engineering at IOE Pulchowk Campus (2018–2023). During that time I also taught Docker and cloud tooling in a one-month software fellowship — turns out explaining containers to a room full of people is the fastest way to properly understand them yourself.
 
-## Skills
+Certifications, for the record: AWS Cloud Foundations · FuseMachines ML micro-degree · NAAMI Winter School in AI · IBM Quantum's "Qbit by Qbit" intro to quantum computing.
 
-**Cloud / DevOps / Platform:** Kubernetes, Gateway API, Helm, Docker, Nix, Terraform, Prometheus, Thanos, GitHub Actions, GitLab CI, GCP, AWS, Azure DevOps, secret management, Redis, Linux administration, Bash
+## Say hi
 
-**Backend:** Python (Flask, FastAPI), Go, API design, microservices, distributed systems, Temporal, Celery, C/C++, SQL, PostgreSQL, MongoDB, JavaScript
-
-**Foundations:** algorithms & data structures, operating systems, networking, graphics programming & shaders, object-oriented design
-
-## Education & certifications
-
-**BE Computer Engineering** — Tribhuvan University, IOE Pulchowk Campus (2018 – 2023).
-Instructor for a one-month software fellowship, designing and running the Docker and cloud-tooling classes.
-
-Certifications: AWS Cloud Foundations · FuseMachines ML micro-degree · NAAMI Winter School in AI · IBM Quantum "Qbit by Qbit" intro to quantum computing
-
-## Get in touch
-
-Fastest way is email: [ankitpaudel20000@gmail.com](mailto:ankitpaudel20000@gmail.com). I'm also on [GitHub](https://github.com/ankitpaudel20), [LinkedIn](https://www.linkedin.com/in/ankitpaudel20), and [Twitter/X](https://twitter.com/ankitpaudel20000).
+The inbox is always open: [ankitpaudel20000@gmail.com](mailto:ankitpaudel20000@gmail.com). I'm also around on [GitHub](https://github.com/ankitpaudel20), [LinkedIn](https://www.linkedin.com/in/ankitpaudel20), and [Twitter/X](https://twitter.com/ankitpaudel20000). And if you're hiring — the CV button up top has the formal version of this page.

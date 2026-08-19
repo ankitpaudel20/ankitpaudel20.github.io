@@ -14,10 +14,7 @@ categories:
   - Python
   - Docker
 tags:
-  - python
-  - docker
   - container
-  - debug
 ---
 
 

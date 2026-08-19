@@ -14,10 +14,6 @@ figurePositionShow: true # Override global value for showing the figure label.
 categories:
   - kubernetes
 tags:
-  - kubernetes
-  - k8s-namespaces
-  - ephemeral-env
-  - cloud-testing
 # comment: false # Disable comment if false.
 ---
 

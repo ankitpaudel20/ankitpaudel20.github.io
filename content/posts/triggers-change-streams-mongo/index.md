@@ -15,7 +15,6 @@ figurePositionShow: true # Override global value for showing the figure label.
 categories:
   - database
 tags:
-  - database
   - mongodb
 ---
 

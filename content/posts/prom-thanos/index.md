@@ -11,7 +11,6 @@ draft: false
 categories:
   - kubernetes
 tags:
-  - kubernetes
   - monitoring
 ---
 

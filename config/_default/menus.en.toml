@@ -7,3 +7,14 @@ weight = 10
 name = "Posts"
 pageRef = "posts"
 weight = 20
+
+[[main]]
+name = "Projects"
+pageRef = "projects"
+weight = 25
+
+[[main]]
+name = "CV"
+url = "/cv/ankitpaudel-cv.pdf"
+pre = "download"
+weight = 30

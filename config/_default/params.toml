@@ -23,6 +23,10 @@ showReadingTime = true
 showTableOfContents = true
 showTaxonomies = true
 showComments = true
+showHero = true
+heroStyle = "big"
 
 [list]
 groupByYear = true
+showCards = true
+showSummary = true
