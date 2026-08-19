@@ -1,0 +1,10 @@
+baseURL = "https://ankitp.com.np/"
+defaultContentLanguage = "en"
+enableRobotsTXT = true
+
+[pagination]
+pagerSize = 10
+
+[taxonomies]
+tag = "tags"
+category = "categories"
