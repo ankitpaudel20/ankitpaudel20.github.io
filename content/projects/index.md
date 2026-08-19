@@ -10,7 +10,7 @@ showPagination: false
 showTableOfContents: false
 ---
 
-Things I've built outside of work — mostly to understand something from first principles. The cards below are live from GitHub.
+Things I've built outside of work — mostly to understand something from first principles, mostly before my professional career. The cards below are live from GitHub.
 
 ## 3D renderer from scratch
 
