@@ -1,0 +1,13 @@
+baseURL = "https://ankitp.com.np/"
+defaultContentLanguage = "en"
+enableRobotsTXT = true
+
+[outputs]
+home = ["HTML", "RSS", "JSON"]
+
+[pagination]
+pagerSize = 10
+
+[taxonomies]
+tag = "tags"
+category = "categories"
