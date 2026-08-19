@@ -3,7 +3,7 @@ title: "Guide to worker types in gunicorn"
 description: "Why are there different worker types in gunicorn and when to use which type of worker." 
 date: 2024-12-22T11:41:14Z
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
-image: 
+aliases: ["/p/guide-to-worker-types-in-gunicorn/"]
 math: 
 license: 
 hidden: false

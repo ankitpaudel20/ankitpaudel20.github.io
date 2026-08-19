@@ -7,7 +7,7 @@ description: "This article delves how we devised a solution for integration test
 # toc: true # Controls if a table of contents should be generated for first-level links automatically.
 # menu: main
 usePageBundles: true # Set to true to group assets like images in the same folder as this post.
-image: "k8s.png" # Sets thumbnail image appearing inside card on homepage.
+aliases: ["/p/managing-on-demand-ephemeral-microservice-development-environment-in-a-single-k8s-cluster./"]
 codeMaxLines: 10 # Override global value for how many lines within a code block before auto-collapsing.
 codeLineNumbers: false # Override global value for showing of line numbers within code block.
 figurePositionShow: true # Override global value for showing the figure label.

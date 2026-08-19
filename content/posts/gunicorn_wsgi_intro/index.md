@@ -3,7 +3,7 @@ title: "Introduction to WSGI and gunicorn"
 description: "Tldr and intro to gunicorn so you can debug overlooked issue in production." 
 date: 2024-12-22T11:41:14Z
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
-image: 
+aliases: ["/p/introduction-to-wsgi-and-gunicorn/"]
 math: 
 license: 
 hidden: false

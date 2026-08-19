@@ -2,7 +2,7 @@
 title: "Cloud-native monitoring with Lightweight Prometheus + Thanos on GKE"
 description: How to setup lightweight HA Prometheus + Thanos cluster for verbose monitoring on gke clusters with more than 50% cost-savings as compared to google managed prometheus service.
 date: 2025-08-10T08:33:09Z
-image: "grafana-thanos.png"
+aliases: ["/p/cloud-native-monitoring-with-lightweight-prometheus--thanos-on-gke/"]
 math: 
 license: 
 hidden: false
