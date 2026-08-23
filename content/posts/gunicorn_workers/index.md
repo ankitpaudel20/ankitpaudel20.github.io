@@ -1,6 +1,7 @@
 ---
 title: "Guide to worker types in gunicorn"
 description: "Why are there different worker types in gunicorn and when to use which type of worker." 
+summary: "A practical guide to worker types in Gunicorn: understanding concurrency models, synchronous vs asynchronous workers, and selecting the right worker architecture."
 date: 2024-12-22T11:41:14Z
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
 aliases: ["/p/guide-to-worker-types-in-gunicorn/"]

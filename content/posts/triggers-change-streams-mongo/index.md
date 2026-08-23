@@ -5,7 +5,7 @@ description: "Using triggers and change-streams for near realtime data synchroni
 featured: true # Sets if post is a featured post, making appear on the home page side bar.
 draft: false # Sets whether to render this page. Draft of true will not be rendered.
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
-summary: "Intro on how to use triggers and change-streams in mongo"
+summary: "How we built near real-time CDC data pipelines using MongoDB change streams to keep Elasticsearch in sync across high-volume production collections without performance penalties."
 usePageBundles: true # Set to true to group assets like images in the same folder as this post.
 aliases: ["/p/mongodb-triggers-and-change-streams/"]
 thumbnail: "mongo_thumbnail.png" # Sets thumbnail image appearing inside card on homepage.

@@ -1,0 +1,34 @@
+colorScheme: "congo"
+defaultAppearance: "light"
+autoSwitchAppearance: true
+enableSearch: true
+enableCodeCopy: true
+mainSections:
+  - "posts"
+
+header:
+  layout: "basic"
+
+footer:
+  showAppearanceSwitcher: true
+
+homepage:
+  layout: "profile"
+  showRecent: true
+  showRecentItems: 5
+  showMoreLink: true
+  showMoreLinkDest: "/posts/"
+
+article:
+  showDate: true
+  showReadingTime: true
+  showTableOfContents: true
+  showTaxonomies: true
+  showComments: true
+  showHero: true
+  heroStyle: "big"
+
+list:
+  groupByYear: true
+  showCards: true
+  showSummary: true

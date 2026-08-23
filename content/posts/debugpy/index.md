@@ -2,7 +2,7 @@
 title: "Debugging a python program inside of a container" # Title of the blog post.
 date: 2024-06-22T10:45:58+05:45 # Date of post creation.
 description: "Instead of spending hours on setting up a dev env in your local machine just for a single bughunt, do it inside a container and delete the container and image after the job. Zero Bloat." # Description used for search engine.
-# summary: "Instead of spending hours on setting up a dev env in your local machine just for a single debug, do it inside a container and delete the container and image after the job. Zero Bloat"
+summary: "Instead of spending hours on setting up a dev env in your local machine just for a single debug, do it inside a container and delete the container and image after the job. Zero Bloat."
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
 aliases: ["/p/debugging-a-python-program-inside-of-a-container/"]
 featureImageAlt: 'Kudos to real python for this great illustration showing python versions in a container' # Alternative text for featured image.

@@ -1,6 +1,7 @@
 ---
 title: "Introduction to WSGI and gunicorn"
 description: "Tldr and intro to gunicorn so you can debug overlooked issue in production." 
+summary: "An introduction to WSGI and Gunicorn internals to understand how Python web servers handle requests and how to debug overlooked production issues."
 date: 2024-12-22T11:41:14Z
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
 aliases: ["/p/introduction-to-wsgi-and-gunicorn/"]

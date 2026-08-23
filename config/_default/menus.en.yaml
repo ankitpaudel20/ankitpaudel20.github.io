@@ -1,0 +1,17 @@
+main:
+  - name: "About"
+    pageRef: "about"
+    weight: 10
+
+  - name: "Posts"
+    pageRef: "posts"
+    weight: 20
+
+  - name: "Projects"
+    pageRef: "projects"
+    weight: 25
+
+  - name: "CV"
+    url: "/cv/ankitpaudel-cv.pdf"
+    pre: "download"
+    weight: 30

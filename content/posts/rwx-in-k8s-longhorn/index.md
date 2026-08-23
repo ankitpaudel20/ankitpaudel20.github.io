@@ -5,7 +5,7 @@ description: "Lessons learnt with using Longhorn for setting up RWX volumes in k
 featured: true # Sets if post is a featured post, making appear on the home page side bar.
 draft: false # Sets whether to render this page. Draft of true will not be rendered.
 toc: true # Controls if a table of contents should be generated for first-level links automatically.
-summary: "Intro to solutions for RWX volume in k8s cluster. The experience with using longhorn for the job."
+summary: "How we evaluated Longhorn for RWX shared storage in Kubernetes, diagnosed stability bottlenecks in dynamic clusters, and migrated to a hardened off-cluster NFS solution."
 usePageBundles: true # Set to true to group assets like images in the same folder as this post.
 aliases: ["/p/rwx-volume-in-k8s-adventure-with-longhorn/"]
 thumbnail: "thumbnail.png" # Sets thumbnail image appearing inside card on homepage.

@@ -1,0 +1,21 @@
+locale: "en"
+label: "English"
+weight: 1
+title: "Ankit Paudel"
+
+params:
+  displayName: "EN"
+  isoCode: "en"
+  rtl: false
+  dateFormat: "2 January 2006"
+
+  author:
+    name: "Ankit Paudel"
+    image: "img/avatar.JPG"
+    headline: "Senior SRE / Platform Engineer @ [Docsumo](https://www.docsumo.com) · Kubernetes, Python/Go, and AI-augmented workflows"
+    bio: "Code, Cloud and AI; Taming all three"
+    links:
+      - email: "mailto:ankitpaudel20000@gmail.com"
+      - github: "https://github.com/ankitpaudel20"
+      - linkedin: "https://www.linkedin.com/in/ankitpaudel20"
+      - twitter: "https://twitter.com/ankitpaudel20000"

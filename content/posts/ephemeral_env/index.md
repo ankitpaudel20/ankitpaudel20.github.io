@@ -2,6 +2,7 @@
 title: "Managing on demand ephemeral microservice development environment in a single k8s cluster." # Title of the blog post.
 date: 2024-06-23T09:30:05+05:45 # Date of post creation.
 description: "This article delves how we devised a solution for integration testing in the cloud to test features in production like env before release or merge of any feature to the release branch." # Description used for search engine.
+summary: "How we designed and automated on-demand ephemeral staging environments in a single Kubernetes cluster to enable reliable pre-release integration testing across microservices."
 # featured: true # Sets if post is a featured post, making appear on the home page side bar.
 # draft: false # Sets whether to render this page. Draft of true will not be rendered.
 # toc: true # Controls if a table of contents should be generated for first-level links automatically.
