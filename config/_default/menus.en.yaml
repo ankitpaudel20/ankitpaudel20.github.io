@@ -11,7 +11,3 @@ main:
     pageRef: "projects"
     weight: 25
 
-  - name: "CV"
-    url: "/cv/ankitpaudel-cv.pdf"
-    pre: "download"
-    weight: 30

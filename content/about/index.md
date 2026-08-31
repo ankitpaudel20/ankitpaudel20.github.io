@@ -16,10 +16,6 @@ I'm a platform / SRE engineer at [Docsumo](https://www.docsumo.com), a document-
 
 I like the messy middle of infrastructure: the part where "it works on my machine" meets "it has to work for everyone, at 3 a.m., during a node failure." Most of what I write on this blog comes from that place.
 
-{{< button href="/cv/ankitpaudel-cv.pdf" target="_blank" >}}
-Download CV
-{{< /button >}}
-
 ## Things I've been up to at Docsumo
 
 - Rebuilt our document-processing pipeline into a distributed system that comfortably moves millions of documents a month.
@@ -58,4 +54,4 @@ Certifications, for the record: AWS Cloud Foundations · FuseMachines ML micro-d
 
 ## Say hi
 
-The inbox is always open: [ankitpaudel20000@gmail.com](mailto:ankitpaudel20000@gmail.com). I'm also around on [GitHub](https://github.com/ankitpaudel20), [LinkedIn](https://www.linkedin.com/in/ankitpaudel20), and [Twitter/X](https://twitter.com/ankitpaudel20000). And if you're hiring — the CV button up top has the formal version of this page.
+The inbox is always open: [ankitpaudel20000@gmail.com](mailto:ankitpaudel20000@gmail.com). I'm also around on [GitHub](https://github.com/ankitpaudel20), [LinkedIn](https://www.linkedin.com/in/ankitpaudel20), and [Twitter/X](https://twitter.com/ankitpaudel20000).

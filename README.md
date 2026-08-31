@@ -26,4 +26,3 @@ Push to `master`; GitHub Actions (`.github/workflows/gh-pages.yml`) builds and d
 - The only theme override is `layouts/partials/comments.html` (giscus) — Blowfish's documented extension point.
 - Posts are page bundles under `content/posts/`; a cover image is any bundle file matching `*feature*`, `*cover*`, or `*thumbnail*`.
 - Old `/p/<slug>/` URLs redirect via per-post `aliases`.
-- The public CV lives at `static/cv/ankitpaudel-cv.pdf`.
